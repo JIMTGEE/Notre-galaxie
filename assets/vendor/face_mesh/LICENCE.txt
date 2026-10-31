@@ -1,0 +1,3 @@
+MediaPipe Face Mesh (legacy solution) — © Google LLC, licence Apache 2.0.
+https://github.com/google/mediapipe  ·  https://www.npmjs.com/package/@mediapipe/face_mesh
+Ces fichiers sont utilisés localement dans le navigateur pour repérer les traits du visage ; la photo n'est envoyée nulle part.

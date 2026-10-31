@@ -1,0 +1,3 @@
+Dépose ici ta vidéo (mp4 H.264/AAC : la plus compatible, idéalement < 40 Mo).
+Puis dans data.php :  'media' => ['type' => 'video', 'src' => 'assets/videos/ma-video.mp4']
+Si le fichier manque, le cinéma affiche les phrases de l'étoile sur l'écran.

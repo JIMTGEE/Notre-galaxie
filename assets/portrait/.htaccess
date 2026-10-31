@@ -1,0 +1,9 @@
+# La photo originale n'est jamais servie directement (elle peut contenir
+# des métadonnées : GPS, appareil…). Seul portrait.php la sert, nettoyée.
+<IfModule mod_authz_core.c>
+  Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+  Order allow,deny
+  Deny from all
+</IfModule>

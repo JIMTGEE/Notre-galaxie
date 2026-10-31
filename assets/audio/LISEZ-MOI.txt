@@ -1,0 +1,3 @@
+Optionnel : dépose un fichier  musique.mp3  ici. Il se lance avec le son d'ambiance
+à l'entrée dans la galaxie (jamais avant un geste de la personne).
+Sans fichier, l'ambiance générée par le navigateur suffit.

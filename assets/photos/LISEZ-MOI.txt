@@ -1,0 +1,4 @@
+Dépose ici les photos de tes étoiles « photo » (jpg, png, webp).
+Puis indique-les dans data.php :  'media' => ['type' => 'photo', 'src' => 'assets/photos/ma-photo.jpg']
+ou plusieurs :  'gallery' => [['src' => 'assets/photos/a.jpg', 'caption' => 'Légende'], …]
+Si un fichier manque, la galerie affiche un cadre « photo à ajouter » : rien ne casse.

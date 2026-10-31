@@ -1,0 +1,3 @@
+MediaPipe Selfie Segmentation (legacy solution) — © Google LLC, licence Apache 2.0.
+https://github.com/google/mediapipe  ·  https://www.npmjs.com/package/@mediapipe/selfie_segmentation
+Ces fichiers sont utilisés localement dans le navigateur pour détourer la silhouette (cheveux, cou, vêtements) ; la photo n'est envoyée nulle part.

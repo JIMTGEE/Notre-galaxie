@@ -1,0 +1,8 @@
+# Types MIME pour la reconnaissance du visage (fichiers WebAssembly) et cache long.
+<IfModule mod_mime.c>
+  AddType application/wasm .wasm
+</IfModule>
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresDefault "access plus 1 month"
+</IfModule>

@@ -1,0 +1,12 @@
+DÉPOSE SA PHOTO ICI  (un seul fichier : jpg, png, webp ou avif)
+
+Conseils pour un portrait d'étoiles réussi :
+  • visage de face ou de trois-quarts, bien éclairé, plutôt centré
+  • fond le plus simple possible (mur, ciel…) — un PNG détouré marche encore mieux
+  • bonne résolution (au moins 600 px de haut)
+  • aucune retouche nécessaire : le système redresse la photo, ajuste le contraste,
+    isole le visage, puis place les étoiles et relie les constellations tout seul
+
+Le nom du fichier n'a aucune importance. Pour vérifier que tout est bien
+reconnu, ouvre  portrait.php?info  dans ton navigateur.
+Les réglages (nombre d'étoiles, lignes…) sont dans data.php, section $portrait.

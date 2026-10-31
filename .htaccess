@@ -1,0 +1,8 @@
+# Force le bon MIME type pour les modules JS
+AddType application/javascript .js
+AddType application/javascript .mjs
+
+# Autorise le chargement des modules depuis unpkg (si CSP activée)
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+</IfModule>
