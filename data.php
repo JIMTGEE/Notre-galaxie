@@ -117,9 +117,10 @@ $constellationStars = [
     [
         'position' => 'right-lower',
         'type'     => 'video',
-        'title'    => 'Exemple de légende',                                    // ★ titre
-        'text'     => "[Décris ce souvenir en une phrase.]",                    // ★ phrase (affichée sur l'écran si la vidéo manque)
-        'media'    => ['type' => 'video', 'src' => 'assets/videos/video1.mp4'],  // 📁 ★ dépose la vidéo (mp4) dans assets/videos/ et corrige le nom
+        'title'    => 'Exemple de légende',                                    // ★ titre — à personnaliser
+        'text'     => "[Décris ce souvenir en une phrase.]",                    // ★ phrase (affichée sur l'écran si la vidéo manque) — à personnaliser
+        // 🔧 Réutilise temporairement savid.mp4 ici le temps que tu déposes une 2e vidéo dans assets/videos/ et corriges le nom ci-dessous.
+        'media'    => ['type' => 'video', 'src' => 'assets/videos/savid.mp4'],  // 📁 ★ dépose la vidéo (mp4) dans assets/videos/ et corrige le nom
     ],
 
     /* ── ÉTOILE VII · bas gauche · monde : ARBRE DE LUMIÈRE ── */
@@ -138,7 +139,8 @@ $constellationStars = [
         'type'     => 'future',
         'title'    => "L'avenir",                                              // ★ titre (affiché aussi à la fin du voyage)
         // ★ Une phrase = une porte à franchir, avec un souhait (jusqu'à 8).
-        'text'     => "[Pas des promesses — juste des souhaits.] [Un endroit que tu aimerais partager avec elle.] [Une expérience à vivre un jour.] [Un souhait pour elle.]",
+        // 🖊️ BROUILLON — à relire et personnaliser avant d'envoyer.
+        'text'     => "Je ne veux rien te promettre que je ne pourrais pas tenir — juste te dire, doucement, ce que j'espère pour nous. J'aimerais qu'on découvre ensemble un endroit où ni toi ni moi n'avons jamais mis les pieds, juste pour explorer le monde main dans la main. J'aimerais qu'on prenne le temps de vivre de nouvelles choses à deux, sans pression, juste pour le plaisir d'être ensemble. Et par-dessus tout, je souhaite que tu te sentes aimée, chaque jour, exactement comme tu es.❤️",
         'media'    => null,
     ],
 ];
@@ -148,13 +150,14 @@ $constellationStars = [
         étoiles sont allumées. Un paragraphe = un écran dans le cœur 3D.
    ══════════════════════════════════════════════════════════════════════════ */
 $letterTitle = "Ce que je n'exprime pas toujours";                              // ★ titre de la lettre
+// 🖊️ BROUILLON — à relire et personnaliser avant d'envoyer.
 $letterParagraphs = [                                                          // ★ ajoute ou retire des paragraphes à volonté
-    "[Première pensée — comment tu te sens en lui écrivant cette lettre.]",
-    "[Ce qu'elle a représenté pour toi, simplement, sans détour.]",
-    "[Ce que votre histoire t'a appris sur toi-même ou sur l'amour.]",
-    "[Ce que tu admires encore chez elle aujourd'hui.]",
+    "Je t'écris ces mots en sachant que je ne les dis pas assez souvent à voix haute. Il y a des choses que je porte en silence, non pas parce qu'elles comptent moins, mais parce que je ne trouve pas toujours comment les dire. Alors je les écris ici, pour toi.",
+    "Tu es devenue, sans que je l'aie vraiment planifié, la personne vers qui je me tourne en premier — dans la joie comme dans les moments plus difficiles. Simplement, tu comptes. Plus que je ne saurais l'exprimer en une seule phrase.",
+    "Notre histoire m'a appris à être plus patient, à écouter avant de réagir, et à comprendre que l'amour ne se mesure pas à l'absence de disputes, mais à la volonté de revenir l'un vers l'autre après. Tu m'as appris à aimer mieux, pas seulement plus fort.",
+    "Aujourd'hui encore, j'admire ta force tranquille, ta manière de te relever après chaque chute, et cette lumière que tu gardes même quand tout n'est pas parfait. Tu es, et tu resteras, une étoile entre mille.❤️",
 ];
-$letterSignoff = "[Une dernière ligne, signée de ton prénom.]";                  // ★ signature (affichée en doré, à la fin)
+$letterSignoff = "Toujours à toi. — Jim";                  // ★ signature (affichée en doré, à la fin) — brouillon, à ajuster
 
 /* ══════════════════════════════════════════════════════════════════════════
    ★5 · PHRASES D'OUVERTURE — film d'introduction (première visite seulement)
