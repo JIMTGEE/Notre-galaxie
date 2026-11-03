@@ -91,7 +91,7 @@ $constellationStars = [
         'type'     => 'video',
         'title'    => 'Avant même de le savoir…',                                    // ★ titre
         'text'     => "Quand je regarde cette vidéo, je revois deux personnes qui, sans vraiment le savoir, étaient en train de devenir quelque chose de précieux l'une pour l'autre. Tes petits moments de timidité, nos conversations, mes regards… Il y avait déjà quelque chose de doux entre nous. Aujourd'hui, je réalise que nous avions déjà commencé à écrire notre histoire, un sourire et un instant à la fois. Et regarde-nous, tout le chemin que nous avons parcouru depuis.❤️",         // ★ texte
-       'media'    => ['type' => 'video', 'src' => 'assets/videos/savid.mp4'],  // 📁 ★ dépose la vidéo (mp4) dans assets/videos/ et corrige le nom
+       'media'    => ['type' => 'video', 'src' => 'assets/videos/sanavid.mp4'],  // 📁 ★ dépose la vidéo (mp4) dans assets/videos/ et corrige le nom
     ],
 
     /* ── ÉTOILE IV · milieu droit · monde : CONSTELLATION VIVANTE ── */
