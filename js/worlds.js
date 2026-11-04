@@ -362,11 +362,13 @@
     async build() {
       const P = this.pal, st = this.star; makeDome(this, '#0a2a5a', '#3a2a8a', P[2], 0.85); makeStarDome(this, 1600, P[0]);
       this.rig = new GX.OrbitRig(this.camera, { tz: -14, ty: 0.4, dist: 36, minDist: 10, maxDist: 28, yawLim: 0.55, pitchLim: 0.3, spring: 0.9, pitch: 0.04 });
-      const Wd = 13, Hd = Wd * 9 / 16; this.vsrc = st.media && st.media.type === 'video' ? st.media.src : null; this.hasV = false; this.vfail = false; this.amb = new THREE.Color(P[0]);
+      const Wd = 13, Hd = Wd * 9 / 16; this.baseWd = Wd; this.baseHd = Hd; this.vsrc = st.media && st.media.type === 'video' ? st.media.src : null; this.hasV = false; this.vfail = false; this.amb = new THREE.Color(P[0]);
       let tex = null;
       if (this.vsrc) {
         const v = document.createElement('video'); v.src = this.vsrc; v.playsInline = true; v.preload = 'auto'; v.setAttribute('playsinline', ''); this.video = v;
         v.addEventListener('error', () => { this.vfail = true; this.screenMat.uniforms.uHas.value = 0; if (this.ctl) this.ctl.play.parentNode.remove(); this.capI = -1; this.capTimer = 99; this.markRead(0); });
+        /* ★ dès que les dimensions réelles de la vidéo sont connues, l'écran épouse son format (plus d'étirement) */
+        v.addEventListener('loadedmetadata', () => this.fitScreenToVideo(v.videoWidth, v.videoHeight));
         v.addEventListener('loadeddata', () => { this.hasV = true; this.screenMat.uniforms.uHas.value = 1; });
         v.addEventListener('ended', () => { this.setPlaying(false); this.markRead(0); });
         tex = new THREE.VideoTexture(v); tex.minFilter = THREE.LinearFilter; tex.magFilter = THREE.LinearFilter; tex.generateMipmaps = false;
@@ -374,7 +376,7 @@
       }
       this.screenMat = new THREE.ShaderMaterial({ uniforms: { uTex: { value: tex }, uNoise: { value: GX.noiseTex }, uTime: GX.uTime, uHas: { value: 0 }, uPlay: { value: 0 }, uA: { value: new THREE.Color(P[0]) }, uB: { value: new THREE.Color(P[1]).multiplyScalar(0.7) } }, vertexShader: 'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}', fragmentShader: SCREEN_FS, transparent: true, depthTest: false, depthWrite: false });
       const scr = new THREE.Mesh(new THREE.PlaneGeometry(Wd, Hd), this.screenMat); scr.position.set(0, 3.4, -14); scr.renderOrder = 7; this.scene.add(scr); this.screen = scr;
-      const hitScr = new THREE.Mesh(new THREE.PlaneGeometry(Wd, Hd), new THREE.MeshBasicMaterial()); hitScr.position.set(0, 3.4, -13.9); this.addPick(hitScr, 1000); this.scene.add(hitScr);
+      const hitScr = new THREE.Mesh(new THREE.PlaneGeometry(Wd, Hd), new THREE.MeshBasicMaterial()); hitScr.position.set(0, 3.4, -13.9); this.addPick(hitScr, 1000); this.scene.add(hitScr); this.hitScr = hitScr;
       this.frame = new THREE.Mesh(new THREE.PlaneGeometry(Wd * 1.5, Hd * 1.7), new THREE.ShaderMaterial({ uniforms: { uC: { value: new THREE.Color(P[0]) }, uTime: GX.uTime, uP: { value: 0 } }, vertexShader: 'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}', fragmentShader: 'uniform vec3 uC;uniform float uTime,uP;varying vec2 vUv;void main(){vec2 d=abs(vUv-.5)*2.;float e=max(d.x/1.0,d.y/1.0);float inner=smoothstep(.62,.66,max(d.x*1.5/1.0,d.y*1.7/1.0));float edge=exp(-pow((max(d.x*1.5,d.y*1.7)-.67)*14.,2.))*.9;float glow=exp(-pow(max(d.x*1.5,d.y*1.7)-.62,2.)*6.)*.28*(.7+.3*uP);gl_FragColor=vec4(uC*(edge*.8+glow*inner),1.);}', transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending })); this.frame.position.set(0, 3.4, -14.05); this.frame.renderOrder = 5; this.scene.add(this.frame);
       /* sol miroir + faisceau de projection */
       const floor = new THREE.Mesh(new THREE.CircleGeometry(30, 64), new THREE.ShaderMaterial({ uniforms: { uC: { value: new THREE.Color(P[0]) }, uP: { value: 0 } }, vertexShader: 'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}', fragmentShader: 'uniform vec3 uC;uniform float uP;varying vec2 vUv;void main(){vec2 c=(vUv-.5)*2.;float r=length(c);float a=exp(-r*r*5.)*.22+exp(-pow((r-.42)*10.,2.))*.12;a+=exp(-pow((c.x)*5.,2.)-pow(c.y+.2,2.)*4.)*.2*(.5+uP);gl_FragColor=vec4(uC*a,1.);}', transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); floor.rotation.x = -Math.PI / 2; floor.position.set(0, -3.2, -10); floor.renderOrder = -55; this.scene.add(floor); this.floor = floor;
@@ -382,6 +384,16 @@
       const rr = rng(77), N = small ? 120 : 260, dp = new Float32Array(N * 3); for (let k = 0; k < N; k++) dp.set([(rr() - 0.5) * 11, rr() * 18 - 3, -12 + (rr() - 0.5) * 7], k * 3);
       this.dust = new THREE.Points(new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(dp, 3)), new THREE.PointsMaterial({ size: 0.12, map: GX.hub.glowTex, color: P[2], transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false })); this.dust.renderOrder = 6; this.scene.add(this.dust);
       this.burst = new Burst(this.scene); this.playing = false; this.o = 0; this.rebuildMeta();
+    }
+    /* ★ ajuste la taille de l'écran (et de son cadre) au format réel de la vidéo, sans jamais l'étirer ni la déformer */
+    fitScreenToVideo(vw, vh) {
+      if (!vw || !vh || !this.screen) return;
+      const box = this.baseWd; // enveloppe carrée : la vidéo garde ses proportions d'origine, sans jamais dépasser cette taille
+      const aspect = vw / vh;
+      let w = box, h = box / aspect;
+      if (h > box) { h = box; w = box * aspect; }
+      const sx = w / this.baseWd, sy = h / this.baseHd;
+      [this.screen, this.hitScr, this.frame].forEach(m => m && m.scale.set(sx, sy, 1));
     }
     rebuildMeta() {
       const o = this.vsrc && !this.vfail ? 1 : 0; this.o = o; this.total = this.items.filter(Boolean).length + o;
