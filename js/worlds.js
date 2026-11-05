@@ -94,6 +94,13 @@
   }
   const soft = () => GX.hub.softTex || (GX.hub.softTex = GX.hub.starTex(false));
   const glowMat = (color, opacity = 1, isSoft = false) => new THREE.SpriteMaterial({ map: isSoft ? soft() : GX.hub.glowTex, color, transparent: true, opacity, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending });
+  /* ★ médias responsives : distance de caméra nécessaire pour que w×h (en unités de scène) tienne entièrement
+     dans le champ de vision actuel — recalculée à partir du format RÉEL de l'écran/téléphone, jamais figée.
+     'fill' = fraction de l'écran que le média doit occuper (plus petit = la caméra recule davantage). */
+  function fitDistanceFor(camera, w, h, fill = 0.4) {
+    const vFov = camera.fov * Math.PI / 180, halfTanV = Math.tan(vFov / 2), halfTanH = halfTanV * camera.aspect;
+    return Math.max((h / 2) / (halfTanV * fill), (w / 2) / (halfTanH * fill));
+  }
 
   /* ---------- éclats de particules ---------- */
   class Burst {
@@ -331,7 +338,9 @@
       const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion), up = new THREE.Vector3(0, 1, 0).applyQuaternion(this.camera.quaternion);
       this.panels.forEach((p, k) => {
         if (!p.ready) return; p.born = Math.min(1, p.born + dt * 0.7 + 0.0); const hv = this.hover === k ? 1 : 0; p.hov += (hv - p.hov) * Math.min(1, dt * 8); p.focus += (((p.target || 0)) - p.focus) * Math.min(1, dt * 4.5);
-        const home = p.home.clone(); home.y += Math.sin(T * 0.7 + p.ph) * 0.12; const aim = this.camera.position.clone().addScaledVector(fwd, 4.1 + (1 - clamp(this.camera.fov / 84)) * 0.0).addScaledVector(up, 0.1);
+        const home = p.home.clone(); home.y += Math.sin(T * 0.7 + p.ph) * 0.12;
+        const focusDist = clamp(fitDistanceFor(this.camera, p.w, p.h, 0.64), 3, 9); // ★ responsive : s'adapte au format de la photo et de l'écran (téléphone compris) — même cadrage généreux que l'écran de cinéma
+        const aim = this.camera.position.clone().addScaledVector(fwd, focusDist).addScaledVector(up, 0.1);
         p.grp.position.lerpVectors(home, aim, smooth(p.focus)); p.grp.lookAt(this.camera.position);
         if (p.focus < 0.02) { const tmp = new THREE.Object3D(); tmp.position.copy(p.grp.position); tmp.lookAt(0, home.y * 0.3, 0); p.grp.quaternion.slerp(tmp.quaternion, 1); }
         const sc = (1 + p.hov * 0.07) * (1 + p.focus * 0.55) * lerp(0.85, 1, smooth(p.born)); p.grp.scale.setScalar(sc);
@@ -385,15 +394,26 @@
       this.dust = new THREE.Points(new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(dp, 3)), new THREE.PointsMaterial({ size: 0.12, map: GX.hub.glowTex, color: P[2], transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false })); this.dust.renderOrder = 6; this.scene.add(this.dust);
       this.burst = new Burst(this.scene); this.playing = false; this.o = 0; this.rebuildMeta();
     }
-    /* ★ ajuste la taille de l'écran (et de son cadre) au format réel de la vidéo, sans jamais l'étirer ni la déformer */
+    /* ★ ajuste la taille de l'écran (et de son cadre) au format réel de la vidéo, sans jamais l'étirer ni la déformer,
+       et SANS jamais réduire sa surface par rapport à l'écran 16:9 d'origine (une vidéo portrait devient haute et
+       fine plutôt que d'être rabougrie) — puis replace la caméra pour qu'elle tienne bien à l'écran, téléphone compris. */
     fitScreenToVideo(vw, vh) {
       if (!vw || !vh || !this.screen) return;
-      const box = this.baseWd; // enveloppe carrée : la vidéo garde ses proportions d'origine, sans jamais dépasser cette taille
-      const aspect = vw / vh;
-      let w = box, h = box / aspect;
-      if (h > box) { h = box; w = box * aspect; }
+      const aspect = vw / vh, area = this.baseWd * this.baseHd; // même surface qu'à l'origine, quel que soit le format
+      const w = Math.sqrt(area * aspect), h = Math.sqrt(area / aspect);
       const sx = w / this.baseWd, sy = h / this.baseHd;
       [this.screen, this.hitScr, this.frame].forEach(m => m && m.scale.set(sx, sy, 1));
+      this.curW = w; this.curH = h;
+      this.fitRigToScreen(900);
+    }
+    /* ★ recule ou rapproche la caméra pour que l'écran courant (this.curW × this.curH) tienne entièrement dans le
+       champ de vision, quel que soit le format de l'appareil (téléphone en portrait compris) — rappelée à l'entrée
+       dans le monde, après chargement des métadonnées vidéo, et à chaque redimensionnement/rotation d'écran. */
+    fitRigToScreen(ms = 900) {
+      if (!this.rig) return;
+      const w = this.curW || this.baseWd, h = this.curH || this.baseHd;
+      const dist = clamp(fitDistanceFor(this.camera, w, h, 0.64), this.rig.minDist, this.rig.maxDist);
+      GX.cancelTweens(this.rig); GX.tween(this.rig, { dist }, ms, { ease: ease.out });
     }
     rebuildMeta() {
       const o = this.vsrc && !this.vfail ? 1 : 0; this.o = o; this.total = this.items.filter(Boolean).length + o;
@@ -402,7 +422,10 @@
       if (!this.total) this.total = 1;
     }
     rebuildChips() { this.rebuildMeta(); }
-    onEnter() { GX.tween(this.rig, { dist: 19 }, 3400, { ease: ease.out }); this.buildControls(); this.cycleCaptions(); }
+    onEnter() {
+      this.fitRigToScreen(3400); this.buildControls(); this.cycleCaptions();
+      this.unsub.push(GX.on('resize', () => this.fitRigToScreen(900))); // téléphone tourné, fenêtre redimensionnée…
+    }
     buildControls() {
       if (!this.vsrc) return; const box = $('w-extra'); box.innerHTML = '';
       const ctl = GX.util.el('div', 'cine-ctl ui', '<button type="button" class="cine-play ui" aria-label="Lecture / pause">▶</button><input class="cine-seek ui" type="range" min="0" max="1000" value="0" aria-label="Position"><span class="cine-time">0:00</span>'); box.appendChild(ctl);

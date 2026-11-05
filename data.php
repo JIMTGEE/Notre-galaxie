@@ -119,8 +119,8 @@ $constellationStars = [
         'type'     => 'video',
         'title'    => 'Exemple de légende',                                    // ★ titre — à personnaliser
         'text'     => "[Décris ce souvenir en une phrase.]",                    // ★ phrase (affichée sur l'écran si la vidéo manque) — à personnaliser
-        // 🔧 Réutilise temporairement savid.mp4 ici le temps que tu déposes une 2e vidéo dans assets/videos/ et corriges le nom ci-dessous.
-        'media'    => ['type' => 'video', 'src' => 'assets/videos/savid.mp4'],  // 📁 ★ dépose la vidéo (mp4) dans assets/videos/ et corrige le nom
+        // 🔧 Réutilise temporairement sanavid.mp4 ici le temps que tu déposes une 2e vidéo dans assets/videos/ et corriges le nom ci-dessous.
+        'media'    => ['type' => 'video', 'src' => 'assets/videos/sanavid.mp4'],  // 📁 ★ dépose la vidéo (mp4) dans assets/videos/ et corrige le nom
     ],
 
     /* ── ÉTOILE VII · bas gauche · monde : ARBRE DE LUMIÈRE ── */
