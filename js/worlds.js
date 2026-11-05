@@ -353,10 +353,18 @@
      3. CINÉMA CÉLESTE  (video)
      ========================================================= */
   const SCREEN_FS = `
-  uniform sampler2D uTex,uNoise;uniform float uTime,uHas,uPlay;uniform vec3 uA,uB;varying vec2 vUv;
+  uniform sampler2D uTex,uNoise;uniform float uTime,uHas,uPlay,uVidAsp,uScrAsp;uniform vec3 uA,uB;varying vec2 vUv;
   void main(){
     vec2 uv=vUv;vec3 col;
-    if(uHas>.5){col=texture2D(uTex,uv).rgb;}
+    if(uHas>.5){
+      /* ★ l'écran garde toujours une forme généreuse adaptée à l'appareil ; c'est ici, et seulement ici,
+         que la vidéo retrouve son vrai format — en lettrebox/pillarbox, jamais étirée, jamais rognée. */
+      float s=uScrAsp/max(uVidAsp,1e-4);
+      vec2 fit=s>1.0?vec2(1.0/s,1.0):vec2(1.0,s);
+      vec2 uvV=(uv-.5)/fit+.5;
+      if(uvV.x<0.||uvV.x>1.||uvV.y<0.||uvV.y>1.){col=uA*.07;}
+      else{col=texture2D(uTex,uvV).rgb;}
+    }
     else{
       vec4 n=texture2D(uNoise,uv*.9+vec2(uTime*.01,0.)),m=texture2D(uNoise,uv*2.4+n.rg*.4-vec2(0.,uTime*.012));
       col=mix(uA*.1,uB*.55,smoothstep(.3,.8,n.r*.6+m.g*.4))*(.35+.55*m.b);
@@ -376,14 +384,15 @@
       if (this.vsrc) {
         const v = document.createElement('video'); v.src = this.vsrc; v.playsInline = true; v.preload = 'auto'; v.setAttribute('playsinline', ''); this.video = v;
         v.addEventListener('error', () => { this.vfail = true; this.screenMat.uniforms.uHas.value = 0; if (this.ctl) this.ctl.play.parentNode.remove(); this.capI = -1; this.capTimer = 99; this.markRead(0); });
-        /* ★ dès que les dimensions réelles de la vidéo sont connues, l'écran épouse son format (plus d'étirement) */
-        v.addEventListener('loadedmetadata', () => this.fitScreenToVideo(v.videoWidth, v.videoHeight));
+        /* ★ dès que les dimensions réelles de la vidéo sont connues, seul le SHADER en tient compte (lettrebox) —
+           la taille de l'écran lui-même ne change pas, elle reste toujours adaptée à l'appareil du visiteur */
+        v.addEventListener('loadedmetadata', () => { if (v.videoWidth && v.videoHeight) this.screenMat.uniforms.uVidAsp.value = v.videoWidth / v.videoHeight; });
         v.addEventListener('loadeddata', () => { this.hasV = true; this.screenMat.uniforms.uHas.value = 1; });
         v.addEventListener('ended', () => { this.setPlaying(false); this.markRead(0); });
         tex = new THREE.VideoTexture(v); tex.minFilter = THREE.LinearFilter; tex.magFilter = THREE.LinearFilter; tex.generateMipmaps = false;
         this.disposables.push(() => { v.pause(); v.removeAttribute('src'); v.load(); GX.audio.duck(false); });
       }
-      this.screenMat = new THREE.ShaderMaterial({ uniforms: { uTex: { value: tex }, uNoise: { value: GX.noiseTex }, uTime: GX.uTime, uHas: { value: 0 }, uPlay: { value: 0 }, uA: { value: new THREE.Color(P[0]) }, uB: { value: new THREE.Color(P[1]).multiplyScalar(0.7) } }, vertexShader: 'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}', fragmentShader: SCREEN_FS, transparent: true, depthTest: false, depthWrite: false });
+      this.screenMat = new THREE.ShaderMaterial({ uniforms: { uTex: { value: tex }, uNoise: { value: GX.noiseTex }, uTime: GX.uTime, uHas: { value: 0 }, uPlay: { value: 0 }, uVidAsp: { value: Wd / Hd }, uScrAsp: { value: Wd / Hd }, uA: { value: new THREE.Color(P[0]) }, uB: { value: new THREE.Color(P[1]).multiplyScalar(0.7) } }, vertexShader: 'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}', fragmentShader: SCREEN_FS, transparent: true, depthTest: false, depthWrite: false });
       const scr = new THREE.Mesh(new THREE.PlaneGeometry(Wd, Hd), this.screenMat); scr.position.set(0, 3.4, -14); scr.renderOrder = 7; this.scene.add(scr); this.screen = scr;
       const hitScr = new THREE.Mesh(new THREE.PlaneGeometry(Wd, Hd), new THREE.MeshBasicMaterial()); hitScr.position.set(0, 3.4, -13.9); this.addPick(hitScr, 1000); this.scene.add(hitScr); this.hitScr = hitScr;
       this.frame = new THREE.Mesh(new THREE.PlaneGeometry(Wd * 1.5, Hd * 1.7), new THREE.ShaderMaterial({ uniforms: { uC: { value: new THREE.Color(P[0]) }, uTime: GX.uTime, uP: { value: 0 } }, vertexShader: 'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}', fragmentShader: 'uniform vec3 uC;uniform float uTime,uP;varying vec2 vUv;void main(){vec2 d=abs(vUv-.5)*2.;float e=max(d.x/1.0,d.y/1.0);float inner=smoothstep(.62,.66,max(d.x*1.5/1.0,d.y*1.7/1.0));float edge=exp(-pow((max(d.x*1.5,d.y*1.7)-.67)*14.,2.))*.9;float glow=exp(-pow(max(d.x*1.5,d.y*1.7)-.62,2.)*6.)*.28*(.7+.3*uP);gl_FragColor=vec4(uC*(edge*.8+glow*inner),1.);}', transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending })); this.frame.position.set(0, 3.4, -14.05); this.frame.renderOrder = 5; this.scene.add(this.frame);
@@ -394,25 +403,29 @@
       this.dust = new THREE.Points(new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(dp, 3)), new THREE.PointsMaterial({ size: 0.12, map: GX.hub.glowTex, color: P[2], transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false })); this.dust.renderOrder = 6; this.scene.add(this.dust);
       this.burst = new Burst(this.scene); this.playing = false; this.o = 0; this.rebuildMeta();
     }
-    /* ★ ajuste la taille de l'écran (et de son cadre) au format réel de la vidéo, sans jamais l'étirer ni la déformer,
-       et SANS jamais réduire sa surface par rapport à l'écran 16:9 d'origine (une vidéo portrait devient haute et
-       fine plutôt que d'être rabougrie) — puis replace la caméra pour qu'elle tienne bien à l'écran, téléphone compris. */
-    fitScreenToVideo(vw, vh) {
-      if (!vw || !vh || !this.screen) return;
-      const aspect = vw / vh, area = this.baseWd * this.baseHd; // même surface qu'à l'origine, quel que soit le format
-      const w = Math.sqrt(area * aspect), h = Math.sqrt(area / aspect);
+    /* ★ la taille de l'ÉCRAN (le cadre lui-même) dépend désormais de l'APPAREIL du visiteur, jamais du format de la
+       vidéo — sur téléphone elle devient un rectangle plus haut, sur ordinateur un large écran panoramique, mais
+       toujours une forme généreuse qui occupe bien le cadrage. Le format propre de la vidéo (portrait, carré…)
+       est respecté séparément, par le shader (uVidAsp/uScrAsp), en lettrebox — jamais en l'étirant ni en la rognant.
+       Même surface mini garantie que le 16:9 d'origine, quel que soit l'appareil. */
+    fitScreenToViewport(ms = 900) {
+      if (!this.screen) return;
+      const area = this.baseWd * this.baseHd;
+      const asp = clamp(this.camera.aspect, 0.5, 2.0); // évite un écran dégénéré sur un format d'appareil extrême
+      const w = Math.sqrt(area * asp), h = Math.sqrt(area / asp);
       const sx = w / this.baseWd, sy = h / this.baseHd;
       [this.screen, this.hitScr, this.frame].forEach(m => m && m.scale.set(sx, sy, 1));
       this.curW = w; this.curH = h;
-      this.fitRigToScreen(900);
+      if (this.screenMat) this.screenMat.uniforms.uScrAsp.value = w / h;
+      this.fitRigToScreen(ms);
     }
-    /* ★ recule ou rapproche la caméra pour que l'écran courant (this.curW × this.curH) tienne entièrement dans le
-       champ de vision, quel que soit le format de l'appareil (téléphone en portrait compris) — rappelée à l'entrée
-       dans le monde, après chargement des métadonnées vidéo, et à chaque redimensionnement/rotation d'écran. */
+    /* ★ recule ou rapproche la caméra pour que l'écran courant (this.curW × this.curH) tienne bien dans le champ de
+       vision tout en restant prégnant à l'écran — rappelée à l'entrée dans le monde et à chaque redimensionnement/
+       rotation d'écran (téléphone compris). */
     fitRigToScreen(ms = 900) {
       if (!this.rig) return;
       const w = this.curW || this.baseWd, h = this.curH || this.baseHd;
-      const dist = clamp(fitDistanceFor(this.camera, w, h, 0.64), this.rig.minDist, this.rig.maxDist);
+      const dist = clamp(fitDistanceFor(this.camera, w, h, 0.74), this.rig.minDist, this.rig.maxDist);
       GX.cancelTweens(this.rig); GX.tween(this.rig, { dist }, ms, { ease: ease.out });
     }
     rebuildMeta() {
@@ -423,8 +436,8 @@
     }
     rebuildChips() { this.rebuildMeta(); }
     onEnter() {
-      this.fitRigToScreen(3400); this.buildControls(); this.cycleCaptions();
-      this.unsub.push(GX.on('resize', () => this.fitRigToScreen(900))); // téléphone tourné, fenêtre redimensionnée…
+      this.fitScreenToViewport(3400); this.buildControls(); this.cycleCaptions();
+      this.unsub.push(GX.on('resize', () => this.fitScreenToViewport(900))); // téléphone tourné, fenêtre redimensionnée…
     }
     buildControls() {
       if (!this.vsrc) return; const box = $('w-extra'); box.innerHTML = '';
