@@ -319,7 +319,14 @@
       });
       this.camera.position.set(0, 0, 0); this.yaw = 0; this.pitch = 0; this.vy = 0; this.vp = 0; this.fov = 70; this.focusI = -1; this.burst = new Burst(this.scene);
     }
-    onEnter() { this.yaw = Math.PI * 0.65; this.fovT = 70; GX.tween(this, { yaw: 0 }, 3600, { ease: ease.out }); this.lockInput = false; }
+    onEnter() { this.yaw = Math.PI * 0.65; this.fovT = 70; GX.tween(this, { yaw: 0 }, 3600, { ease: ease.out }); this.lockInput = false; this.autoFocusFirst(); }
+    /* ★ dès l'arrivée, la toute première photo vient se présenter d'elle-même — plus besoin de deviner qu'il faut en toucher une */
+    async autoFocusFirst() {
+      await GX.wait(1500);
+      for (let n = 0; n < 30 && !this._left && !(this.panels[0] && this.panels[0].ready); n++) await GX.wait(150);
+      if (!this._left && this.focusI < 0 && this.panels[0] && this.panels[0].ready) this.focusItem(0);
+    }
+    onLeave() { this._left = true; }
     onDrag(dx, dy) { if (this.focusI >= 0) return; this.vy += dx * 0.00042 * 60; this.vp += dy * 0.0003 * 60; }
     onWheel(d) { this.fov = clamp(this.fov + d * 0.035, 36, 84); }
     focusItem(k) {

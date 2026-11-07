@@ -58,6 +58,10 @@ $portrait = [
              'items'   => ['phrase 1', 'phrase 2']  → morceaux lus un par un dans le monde
                           (sinon 'text' est découpé en phrases automatiquement)
              'media'   => ['type' => 'photo'|'video', 'src' => 'assets/…']       → 1 photo ou 1 vidéo
+                          ★ fonctionne sur LES 8 ÉTOILES, quel que soit leur 'type'/monde : un petit bouton
+                            « 📷 Voir la photo » / « 🎬 Voir la vidéo » apparaît en haut de l'écran dès qu'elle
+                            est renseignée (pour 'photo'/'video', qui ont déjà leur propre écran, elle reste
+                            dans 'gallery'/'media' comme avant — le bouton n'apparaît que pour les 6 autres)
              'gallery' => [['src' => 'assets/photos/a.jpg', 'caption' => '…'], …] → plusieurs photos
              'accent'  => '#F3A8C7'  → couleur du monde      'kicker' => 'Souvenir' → petit titre
    ══════════════════════════════════════════════════════════════════════════ */

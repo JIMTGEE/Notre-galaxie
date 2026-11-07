@@ -55,13 +55,25 @@
   /* lecteur de texte (fragments, lettres…) */
   const rd = $('reader');
   let rdCb = {};
+  /* ★ média (photo/vidéo) : toujours sa propre forme, jamais étirée ni rognée — responsive (CSS pur, fiable sur téléphone) */
+  function renderReaderMedia(media) {
+    const box = $('reader-media'); box.innerHTML = '';
+    if (!media || !media.src) { box.hidden = true; return; }
+    if (media.type === 'video') {
+      const v = el('video', '', ''); v.src = media.src; v.controls = true; v.playsInline = true; v.preload = 'metadata'; v.setAttribute('controlslist', 'nodownload'); box.appendChild(v);
+    } else {
+      const img = el('img', '', ''); img.src = media.src; img.alt = ''; img.loading = 'lazy'; box.appendChild(img);
+    }
+    box.hidden = false;
+  }
   ui.reader = {
-    show({ kicker, title, paras, index, count, accent, onPrev, onNext, onClose }) {
+    show({ kicker, title, paras, index, count, accent, media, onPrev, onNext, onClose }) {
       rdCb = { onPrev, onNext, onClose };
       rd.style.setProperty('--accent', accent || '#E9C988');
       $('reader-kicker').textContent = kicker || '';
       $('reader-title').textContent = title || '';
       $('reader-title').hidden = !title;
+      renderReaderMedia(media);
       let n = 0; const body = $('reader-body');
       body.innerHTML = (paras || []).map(p => `<p>${String(p).split(' ').map(w => `<span style="--d:${Math.min(n++ * 0.035, 2.4).toFixed(2)}s">${esc(w)}</span>`).join(' ')}</p>`).join('');
       body.scrollTop = 0;
@@ -69,7 +81,7 @@
       $('reader-prev').hidden = !onPrev; $('reader-next').hidden = !onNext;
       rd.hidden = false; rd.classList.remove('open'); void rd.offsetWidth; rd.classList.add('open');
     },
-    hide(silent) { rd.classList.remove('open'); clearTimeout(ui.reader._t); ui.reader._t = setTimeout(() => { rd.hidden = true; }, 450); if (!silent && rdCb.onClose) rdCb.onClose(); rdCb = {}; },
+    hide(silent) { rd.classList.remove('open'); const v = $('reader-media').querySelector('video'); if (v) v.pause(); clearTimeout(ui.reader._t); ui.reader._t = setTimeout(() => { rd.hidden = true; }, 450); if (!silent && rdCb.onClose) rdCb.onClose(); rdCb = {}; },
     get open() { return rd.classList.contains('open'); },
   };
   $('reader-close').onclick = () => ui.reader.hide();
@@ -264,6 +276,12 @@
   function buildWorldHud(world, star, i) {
     $('world-hud').hidden = false; $('w-kicker').textContent = world.meta.kicker || ''; $('w-title').textContent = world.meta.title || ''; ui.hint('');
     $('w-hint').textContent = world.meta.hint || ''; $('w-hint').classList.add('on'); setTimeout(() => $('w-hint').classList.remove('on'), 9000);
+    /* ★ média de l'étoile : un bouton discret l'ouvre dans n'importe quel univers (cinéma/galerie l'affichent déjà eux-mêmes) */
+    const mediaBtn = $('w-media-btn'), hasMedia = star && star.media && star.media.src, nativeMedia = world.kind === 'cinema' || world.kind === 'gallery';
+    if (hasMedia && !nativeMedia) {
+      mediaBtn.hidden = false; mediaBtn.textContent = star.media.type === 'video' ? '🎬 Voir la vidéo' : '📷 Voir la photo';
+      mediaBtn.onclick = () => { GX.audio.tick(); ui.reader.show({ kicker: world.meta.kicker, title: world.meta.title, paras: star.text ? [star.text] : [], index: 0, count: 0, accent: world.accentHex, media: star.media, onClose: () => {} }); };
+    } else { mediaBtn.hidden = true; mediaBtn.onclick = null; }
     const chips = $('w-chips'); chips.innerHTML = '';
     (world.meta.chips || []).forEach((label, k) => {
       const b = el('button', 'w-chip ui', `<span>${k + 1}</span>`); b.title = label; b.setAttribute('aria-label', label);

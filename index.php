@@ -169,6 +169,8 @@ $name = htmlspecialchars((string) $site['recipient'], ENT_QUOTES, 'UTF-8');
 <?php /* ★ PERSO (facultatif) : « Retour au cœur » (bouton dans chaque monde) */ ?>
 <div id="world-hud" class="world-hud" hidden>
   <button id="w-back" class="w-back ui" type="button"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span>Retour au cœur</span></button>
+  <?php /* ★ média de l'étoile (photo/vidéo) : visible dans CHAQUE univers où une media a été ajoutée dans data.php */ ?>
+  <button id="w-media-btn" class="w-media-btn ui" type="button" hidden></button>
   <div class="w-title"><span id="w-kicker"></span><h2 id="w-title"></h2></div>
   <p id="w-hint" class="w-hint"></p>
   <nav id="w-chips" class="w-chips" aria-label="Éléments de ce monde"></nav>
@@ -181,6 +183,7 @@ $name = htmlspecialchars((string) $site['recipient'], ENT_QUOTES, 'UTF-8');
   <div class="reader-card">
     <header><span id="reader-kicker" class="reader-kicker"></span><button id="reader-close" class="reader-close ui" type="button" aria-label="Fermer">✕</button></header>
     <h3 id="reader-title" class="reader-title"></h3>
+    <div id="reader-media" class="reader-media" hidden></div>
     <div id="reader-body" class="reader-body"></div>
     <footer><button id="reader-prev" class="reader-nav ui" type="button" aria-label="Précédent">‹</button><span id="reader-count" class="reader-count"></span><button id="reader-next" class="reader-nav ui" type="button" aria-label="Suivant">›</button></footer>
   </div>
