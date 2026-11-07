@@ -55,14 +55,30 @@ $portrait = [
      'bottom-tip' 'right-lower' 'right-mid' 'right-upper' 'top-dip' 'left-upper' 'left-mid' 'left-lower'
 
    Champs :  position, type, title, text   → obligatoires
-             'items'   => ['phrase 1', 'phrase 2']  → morceaux lus un par un dans le monde
+             'items'   => ['phrase 1', 'phrase 2', …]  → morceaux lus un par un dans le monde
                           (sinon 'text' est découpé en phrases automatiquement)
-             'media'   => ['type' => 'photo'|'video', 'src' => 'assets/…']       → 1 photo ou 1 vidéo
-                          ★ fonctionne sur LES 8 ÉTOILES, quel que soit leur 'type'/monde : un petit bouton
-                            « 📷 Voir la photo » / « 🎬 Voir la vidéo » apparaît en haut de l'écran dès qu'elle
-                            est renseignée (pour 'photo'/'video', qui ont déjà leur propre écran, elle reste
-                            dans 'gallery'/'media' comme avant — le bouton n'apparaît que pour les 6 autres)
-             'gallery' => [['src' => 'assets/photos/a.jpg', 'caption' => '…'], …] → plusieurs photos
+                          ★ MÉLANGE LIBRE texte + média : glisse une photo/vidéo n'importe où dans la liste,
+                            à l'endroit exact où tu la veux (au début, au milieu, à la fin, entre deux phrases…)
+                            — rien n'est jamais forcé en premier. Pour ça, remplace une 'phrase' par :
+                              ['media' => ['type' => 'photo'|'video', 'src' => 'assets/…', 'caption' => '…']]
+                            Exemple :
+                              'items' => [
+                                  'Premier souvenir, en mots.',
+                                  ['media' => ['type' => 'photo', 'src' => 'assets/photos/nous.jpg', 'caption' => 'Ce jour-là']],
+                                  'Puis la suite, en mots aussi.',
+                                  ['media' => ['type' => 'video', 'src' => 'assets/videos/clip.mp4']],
+                              ],
+                            ★ fonctionne sur LES 8 ÉTOILES, quel que soit leur 'type'/monde — chaque élément
+                              (texte ou média) se lit l'un après l'autre, dans l'ordre où tu les as écrits,
+                              via les mêmes puces numérotées en bas de l'écran.
+             'media'   => ['type' => 'photo'|'video', 'src' => 'assets/…']       → ajout rapide d'1 photo/vidéo
+                          SANS choisir sa place : elle rejoint simplement la fin de 'items' (pratique si tu ne
+                          veux pas écrire tout le tableau 'items' toi-même — utilise plutôt un élément dans
+                          'items' ci-dessus si tu veux choisir OÙ elle apparaît). Pour 'photo'/'video' (qui ont
+                          déjà leur propre écran), elle reste dans 'gallery'/l'écran de cinéma comme avant.
+             'gallery' => [['src' => 'assets/photos/a.jpg', 'caption' => '…'], …] → plusieurs photos (univers
+                          « galerie » uniquement — pour mélanger photos et texte dans un ordre précis, utilise
+                          plutôt 'items' ci-dessus)
              'accent'  => '#F3A8C7'  → couleur du monde      'kicker' => 'Souvenir' → petit titre
    ══════════════════════════════════════════════════════════════════════════ */
 $constellationStars = [

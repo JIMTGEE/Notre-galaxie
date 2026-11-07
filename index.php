@@ -27,9 +27,25 @@ foreach (($constellationStars ?? []) as $s) {
         $world = $worldByType[$type] ?? 'planet';
     }
     $text = trim((string) ($s['text'] ?? ''));
-    $items = array_values(array_filter(array_map('trim', (array) ($s['items'] ?? [])), 'strlen'));
+    /* 'items' peut mélanger texte et média, DANS L'ORDRE VOULU : une chaîne = un fragment de texte à lire ;
+       ['media' => ['type'=>'photo'|'video','src'=>'…','caption'=>'…']] = une photo/vidéo insérée à cette place précise
+       (ni forcément en premier, ni forcément séparée du texte — l'ordre du tableau fait foi). */
+    $items = [];
+    foreach ((array) ($s['items'] ?? []) as $it) {
+        if (is_array($it) && isset($it['media']) && is_array($it['media']) && !empty($it['media']['src'])) {
+            $items[] = ['type' => 'media', 'media' => [
+                'type'    => (string) ($it['media']['type'] ?? 'photo'),
+                'src'     => (string) $it['media']['src'],
+                'caption' => (string) ($it['media']['caption'] ?? ''),
+            ]];
+        } elseif (is_string($it)) {
+            $t = trim($it);
+            if ($t !== '') { $items[] = ['type' => 'text', 'text' => $t]; }
+        }
+    }
     if (!$items && $text !== '') {                       // sans 'items' : le texte est découpé en phrases
-        $items = array_values(array_filter(array_map('trim', preg_split('/(?<=[.!?…\]])\s+/u', $text) ?: [$text]), 'strlen'));
+        $parts = array_values(array_filter(array_map('trim', preg_split('/(?<=[.!?…\]])\s+/u', $text) ?: [$text]), 'strlen'));
+        foreach ($parts as $p) { $items[] = ['type' => 'text', 'text' => $p]; }
     }
     $gallery = [];
     foreach ((array) ($s['gallery'] ?? []) as $g) {
@@ -37,8 +53,19 @@ foreach (($constellationStars ?? []) as $s) {
         if (!empty($g['src'])) { $gallery[] = ['src' => (string) $g['src'], 'caption' => (string) ($g['caption'] ?? '')]; }
     }
     $media = $s['media'] ?? null;
-    if (!$gallery && is_array($media) && ($media['type'] ?? '') === 'photo' && !empty($media['src'])) {
-        $gallery[] = ['src' => (string) $media['src'], 'caption' => (string) ($s['title'] ?? '')];
+    $mediaNorm = (is_array($media) && !empty($media['src']))
+        ? ['type' => (string) ($media['type'] ?? 'photo'), 'src' => (string) $media['src'], 'caption' => (string) ($media['caption'] ?? '')]
+        : null;
+    if (!$gallery && $mediaNorm && $mediaNorm['type'] === 'photo') {
+        $gallery[] = ['src' => $mediaNorm['src'], 'caption' => $mediaNorm['caption'] !== '' ? $mediaNorm['caption'] : (string) ($s['title'] ?? '')];
+    }
+    /* le champ 'media' tout seul (sans position choisie dans 'items') reste pratique pour un ajout rapide :
+       pour les mondes qui ne l'affichent pas déjà nativement (cinéma = l'écran, galerie = la photo ci-dessus),
+       il rejoint simplement la fin de la séquence 'items' plutôt que d'imposer un bouton toujours séparé. */
+    $nativelyConsumed = ($world === 'cinema' && $mediaNorm && $mediaNorm['type'] === 'video')
+        || ($world === 'gallery' && $mediaNorm && $mediaNorm['type'] === 'photo');
+    if ($mediaNorm && !$nativelyConsumed) {
+        $items[] = ['type' => 'media', 'media' => $mediaNorm];
     }
     $stars[] = [
         'position' => (string) ($s['position'] ?? 'bottom-tip'),
@@ -49,7 +76,7 @@ foreach (($constellationStars ?? []) as $s) {
         'text'     => $text,
         'items'    => $items,
         'gallery'  => $gallery,
-        'media'    => (is_array($media) && !empty($media['src'])) ? ['type' => (string) ($media['type'] ?? 'photo'), 'src' => (string) $media['src']] : null,
+        'media'    => $mediaNorm,
         'accent'   => isset($s['accent']) ? (string) $s['accent'] : null,
     ];
 }
@@ -169,8 +196,6 @@ $name = htmlspecialchars((string) $site['recipient'], ENT_QUOTES, 'UTF-8');
 <?php /* ★ PERSO (facultatif) : « Retour au cœur » (bouton dans chaque monde) */ ?>
 <div id="world-hud" class="world-hud" hidden>
   <button id="w-back" class="w-back ui" type="button"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span>Retour au cœur</span></button>
-  <?php /* ★ média de l'étoile (photo/vidéo) : visible dans CHAQUE univers où une media a été ajoutée dans data.php */ ?>
-  <button id="w-media-btn" class="w-media-btn ui" type="button" hidden></button>
   <div class="w-title"><span id="w-kicker"></span><h2 id="w-title"></h2></div>
   <p id="w-hint" class="w-hint"></p>
   <nav id="w-chips" class="w-chips" aria-label="Éléments de ce monde"></nav>

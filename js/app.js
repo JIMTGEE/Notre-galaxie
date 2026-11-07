@@ -276,12 +276,6 @@
   function buildWorldHud(world, star, i) {
     $('world-hud').hidden = false; $('w-kicker').textContent = world.meta.kicker || ''; $('w-title').textContent = world.meta.title || ''; ui.hint('');
     $('w-hint').textContent = world.meta.hint || ''; $('w-hint').classList.add('on'); setTimeout(() => $('w-hint').classList.remove('on'), 9000);
-    /* ★ média de l'étoile : un bouton discret l'ouvre dans n'importe quel univers (cinéma/galerie l'affichent déjà eux-mêmes) */
-    const mediaBtn = $('w-media-btn'), hasMedia = star && star.media && star.media.src, nativeMedia = world.kind === 'cinema' || world.kind === 'gallery';
-    if (hasMedia && !nativeMedia) {
-      mediaBtn.hidden = false; mediaBtn.textContent = star.media.type === 'video' ? '🎬 Voir la vidéo' : '📷 Voir la photo';
-      mediaBtn.onclick = () => { GX.audio.tick(); ui.reader.show({ kicker: world.meta.kicker, title: world.meta.title, paras: star.text ? [star.text] : [], index: 0, count: 0, accent: world.accentHex, media: star.media, onClose: () => {} }); };
-    } else { mediaBtn.hidden = true; mediaBtn.onclick = null; }
     const chips = $('w-chips'); chips.innerHTML = '';
     (world.meta.chips || []).forEach((label, k) => {
       const b = el('button', 'w-chip ui', `<span>${k + 1}</span>`); b.title = label; b.setAttribute('aria-label', label);

@@ -146,10 +146,6 @@ body[data-state="world"] .world-hud { opacity: 1; }
 .w-back { position: absolute; left: 20px; top: calc(18px + var(--safe-t)); display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px 10px 14px; font: 500 .8rem var(--font-body); letter-spacing: .08em; color: var(--cream); background: var(--glass); border: 1px solid var(--stroke); border-radius: 999px; backdrop-filter: blur(12px); transition: all .3s; }
 .w-back svg { width: 18px; height: 18px; fill: none; stroke: var(--gold); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .w-back:hover { border-color: var(--gold); transform: translateX(-2px); }
-/* ★ bouton « voir le souvenir » : apparaît dans n'importe quel univers dès qu'une media (photo/vidéo) est présente */
-.w-media-btn { position: absolute; right: 20px; top: calc(18px + var(--safe-t)); display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px 10px 16px; font: 500 .8rem var(--font-body); letter-spacing: .06em; color: var(--cream); background: var(--glass); border: 1px solid color-mix(in srgb, var(--accent) 55%, var(--stroke)); border-radius: 999px; backdrop-filter: blur(12px); box-shadow: 0 0 0 0 transparent; transition: all .3s; animation: mediaPulse 2.6s ease-in-out infinite; }
-.w-media-btn:hover { border-color: var(--gold); transform: translateY(-2px); }
-@keyframes mediaPulse { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 35%, transparent); } 50% { box-shadow: 0 0 16px 2px color-mix(in srgb, var(--accent) 35%, transparent); } }
 .w-title { position: absolute; left: 24px; top: calc(78px + var(--safe-t)); pointer-events: none; max-width: min(60vw, 420px); }
 .w-title span { display: block; font: 500 .66rem var(--font-body); letter-spacing: .42em; text-transform: uppercase; color: var(--accent); text-shadow: 0 0 14px rgba(0, 0, 0, .6); }
 .w-title h2 { font: italic 400 clamp(1.4rem, 3.2vw, 2.1rem)/1.15 var(--font-elegant); margin-top: 4px; text-shadow: 0 2px 22px rgba(0, 0, 0, .7); }
@@ -173,40 +169,56 @@ body[data-state="world"] .world-hud { opacity: 1; }
 @keyframes chapter { 0% { opacity: 0; transform: scale(1.06); filter: blur(10px); } 16% { opacity: 1; transform: none; filter: none; } 72% { opacity: 1; } 100% { opacity: 0; transform: scale(.98); } }
 
 /* ---------- lecteur ---------- */
-.reader { position: fixed; z-index: 45; right: 3vw; bottom: calc(96px + var(--safe-b)); width: min(430px, 38vw); min-width: 320px; opacity: 0; transform: translateY(24px) scale(.97); transition: opacity .5s var(--ease), transform .6s var(--ease); pointer-events: none; }
+/* ★ la carte entière ne dépasse JAMAIS l'écran disponible — quelle que soit la combinaison titre+média+texte,
+   et quelle que soit la taille/orientation de l'appareil : au pire elle défile elle-même, elle ne recouvre
+   jamais un écran de cinéma/une photo en 3D par surprise ni ne sort du cadre vers le haut. */
+.reader { position: fixed; z-index: 45; right: 3vw; bottom: calc(96px + var(--safe-b)); width: min(430px, 38vw); min-width: 320px;
+  max-height: min(76vh, calc(100vh - 100px - var(--safe-t) - var(--safe-b)));
+  opacity: 0; transform: translateY(24px) scale(.97); transition: opacity .5s var(--ease), transform .6s var(--ease); pointer-events: none; }
 .reader.open { opacity: 1; transform: none; pointer-events: auto; }
-.reader-card { position: relative; padding: 22px 26px 16px; background: linear-gradient(165deg, rgba(36, 22, 56, .82), rgba(12, 8, 24, .9)); border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent); border-radius: 22px; backdrop-filter: blur(16px) saturate(1.2); box-shadow: 0 18px 60px rgba(0, 0, 0, .55), 0 0 40px color-mix(in srgb, var(--accent) 16%, transparent); }
+.reader-card { position: relative; display: flex; flex-direction: column; max-height: 100%; overflow-y: auto; overscroll-behavior: contain; padding: 22px 26px 16px; background: linear-gradient(165deg, rgba(36, 22, 56, .82), rgba(12, 8, 24, .9)); border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent); border-radius: 22px; backdrop-filter: blur(16px) saturate(1.2); box-shadow: 0 18px 60px rgba(0, 0, 0, .55), 0 0 40px color-mix(in srgb, var(--accent) 16%, transparent); }
 .reader-card::before { content: ''; position: absolute; left: 26px; top: -1px; width: 56px; height: 2px; background: var(--accent); box-shadow: 0 0 14px var(--accent); }
-.reader-card header { display: flex; justify-content: space-between; align-items: center; }
+.reader-card header { flex: 0 0 auto; display: flex; justify-content: space-between; align-items: center; }
 .reader-kicker { font: 500 .62rem var(--font-body); letter-spacing: .4em; text-transform: uppercase; color: var(--accent); }
 .reader-close { width: 30px; height: 30px; border: 0; background: transparent; color: var(--lav); font-size: 1rem; border-radius: 50%; }
 .reader-close:hover { background: rgba(255, 255, 255, .08); }
-.reader-title { margin-top: 8px; font: italic 400 1.35rem/1.25 var(--font-elegant); color: var(--cream); }
+.reader-title { flex: 0 0 auto; margin-top: 8px; font: italic 400 1.35rem/1.25 var(--font-elegant); color: var(--cream); }
 /* ★ photo/vidéo jointe à cette étoile : jamais étirée ni rognée, toujours responsive (téléphone compris) */
-.reader-media { margin-top: 12px; border-radius: 16px; overflow: hidden; background: #000; border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); box-shadow: 0 10px 30px rgba(0, 0, 0, .45); }
-.reader-media img, .reader-media video { display: block; width: 100%; height: auto; max-height: 46vh; object-fit: contain; background: #000; }
-.reader-body { margin-top: 10px; max-height: 38vh; overflow-y: auto; font: 400 1.04rem/1.78 var(--font-elegant); color: #eadff0; touch-action: pan-y; }
+.reader-media { flex: 0 0 auto; margin-top: 12px; border-radius: 16px; overflow: hidden; background: #000; border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); box-shadow: 0 10px 30px rgba(0, 0, 0, .45); }
+.reader-media img, .reader-media video { display: block; width: 100%; height: auto; max-height: 40vh; object-fit: contain; background: #000; }
+.reader-body { flex: 0 1 auto; margin-top: 10px; max-height: 34vh; overflow-y: auto; font: 400 1.04rem/1.78 var(--font-elegant); color: #eadff0; touch-action: pan-y; }
 .reader-body p + p { margin-top: .8em; }
 .reader-body span { opacity: 0; animation: wordIn .9s ease forwards; animation-delay: var(--d, 0s); }
 @keyframes wordIn { from { opacity: 0; filter: blur(5px); } to { opacity: 1; filter: none; } }
-.reader-card footer { display: flex; justify-content: center; align-items: center; gap: 14px; margin-top: 10px; min-height: 30px; }
+.reader-card footer { flex: 0 0 auto; display: flex; justify-content: center; align-items: center; gap: 14px; margin-top: 10px; min-height: 30px; }
 .reader-nav { width: 32px; height: 32px; border: 1px solid var(--stroke); background: transparent; border-radius: 50%; font-size: 1.1rem; color: var(--cream); }
 .reader-nav:hover { border-color: var(--accent); }
 .reader-count { font: 400 .72rem var(--font-body); letter-spacing: .2em; color: var(--lav); min-width: 44px; text-align: center; }
 
 @media (max-width: 760px) {
-  .reader { right: 12px; left: 12px; width: auto; min-width: 0; bottom: calc(84px + var(--safe-b)); }
-  .reader-body { max-height: 30vh; font-size: 1rem; }
+  .reader { right: 12px; left: 12px; width: auto; min-width: 0; bottom: calc(84px + var(--safe-b)); max-height: min(72vh, calc(100vh - 150px - var(--safe-t) - var(--safe-b))); }
+  .reader-body { max-height: 28vh; font-size: 1rem; }
   .hud-brand div { display: none; } .hud-brand { padding: 10px 12px; }
   .hud-actions { gap: 6px; } .hud-btn { width: 40px; height: 40px; }
   .hud { padding: calc(14px + var(--safe-t)) 12px 0; }
   .w-back { left: 12px; top: calc(14px + var(--safe-t)); } .w-title { left: 16px; top: calc(66px + var(--safe-t)); }
-  .w-media-btn { right: 12px; top: calc(14px + var(--safe-t)); padding: 8px 14px; font-size: .74rem; }
-  .reader-media img, .reader-media video { max-height: 34vh; }
+  .reader-media img, .reader-media video { max-height: 32vh; }
   .hud-progress { left: 12px; bottom: calc(14px + var(--safe-b)); padding: 6px 14px 6px 8px; } .hud-progress svg { width: 44px; height: 42px; }
   .hint { bottom: calc(86px + var(--safe-b)); font-size: .7rem; }
   .toast { top: calc(70px + var(--safe-t)); }
   body[data-state="world"] #btn-full { display: none; }
+}
+/* ★ téléphone à l'horizontale (ex. une vidéo regardée en paysage) : l'écran est large mais BAS — la règle
+   « max-width:760px » ci-dessus ne s'applique pas (la largeur dépasse souvent 760px dans ce sens-là), c'est
+   justement là que la carte-lecteur, sinon trop haute pour la fenêtre, finissait par recouvrir le média. */
+@media (max-height: 500px) and (orientation: landscape) {
+  .reader { width: min(320px, 34vw); min-width: 240px; right: 2vw; bottom: calc(52px + var(--safe-b)); max-height: min(86vh, calc(100vh - 64px - var(--safe-t) - var(--safe-b))); }
+  .reader-card { padding: 14px 18px 10px; }
+  .reader-title { font-size: 1.05rem; margin-top: 4px; }
+  .reader-media img, .reader-media video { max-height: 26vh; }
+  .reader-body { max-height: 20vh; font-size: .92rem; }
+  .w-hint { bottom: calc(76px + var(--safe-b)); }
+  .w-chips { bottom: calc(16px + var(--safe-b)); }
 }
 @media (prefers-reduced-motion: reduce) {
   .st-title .w span, .g-name, .g-enter, .g-enter::before { animation: none !important; opacity: 1; }

@@ -134,7 +134,7 @@
       this.pal = PAL[palKey || kind] || PAL.planet;
       this.accentHex = (star && star.accent) || this.pal[0]; this.accent = new THREE.Color(this.accentHex);
       this.scene = new THREE.Scene(); this.camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 900);
-      this.items = (star && star.items && star.items.length ? star.items : (star && star.text ? [star.text] : [''])).slice(0, 10);
+      this.items = (star && star.items && star.items.length ? star.items : (star && star.text ? [{ type: 'text', text: star.text }] : [{ type: 'text', text: '' }])).slice(0, 10);
       this.total = this.items.length; this.read = new Set(); this.unsub = []; this.pick = []; this.hover = -1; this.rig = null; this.done = false;
       this.meta = { title: star ? star.title : '', kicker: star ? star.kicker : '', hint: '', chips: [] };
       this.stage = GX.registerStage({ scene: this.scene, camera: this.camera, update: (dt, T) => this.update(dt, T) });
@@ -172,6 +172,19 @@
       ui().reader.show({ kicker: o.kicker || (this.total > 1 ? `${this.star.kicker || 'Fragment'} · ${k + 1}` : (this.star.kicker || '')), title: o.title || '', paras: [text], index: k, count: this.total, accent: this.accentHex,
         onPrev: this.total > 1 && k > 0 ? () => this.focusItem(k - 1) : null, onNext: this.total > 1 && k < this.total - 1 ? () => this.focusItem(k + 1) : null, onClose: () => this.onReaderClosed && this.onReaderClosed() });
       this.markRead(k);
+    }
+    /* ★ une photo/vidéo insérée dans 'items' : sa propre petite carte, courte (juste la légende s'il y en a une) —
+       jamais le texte entier de l'étoile collé en dessous, pour que la carte ne devienne jamais plus grande que l'écran. */
+    showMedia(k, media, o = {}) {
+      ui().reader.show({ kicker: o.kicker || (this.total > 1 ? `${this.star.kicker || 'Fragment'} · ${k + 1}` : (this.star.kicker || '')), title: o.title != null ? o.title : (media.caption || ''), paras: [], index: k, count: this.total, accent: this.accentHex, media,
+        onPrev: this.total > 1 && k > 0 ? () => this.focusItem(k - 1) : null, onNext: this.total > 1 && k < this.total - 1 ? () => this.focusItem(k + 1) : null, onClose: () => this.onReaderClosed && this.onReaderClosed() });
+      this.markRead(k);
+    }
+    /* ★ répartiteur : un élément de 'items' peut être du texte OU un média — jamais l'un forcé avant l'autre,
+       l'ordre choisi dans data.php fait foi. */
+    showItem(k, item, o = {}) {
+      if (item && item.type === 'media') this.showMedia(k, item.media, o);
+      else this.showText(k, item && item.type === 'text' ? item.text : String(item == null ? '' : item), o);
     }
     focusItem() { /* surchargé */ }
   }
@@ -230,11 +243,11 @@
       });
       this.orbitScale = 1; this.sel = -1; this.camTarget = new THREE.Vector3(); this.ringT = 0; this.burst = new Burst(this.scene);
       this.meta.hint = n > 1 ? 'Glisse pour tourner · touche une lune pour lire un fragment' : 'Touche la lune pour lire le souvenir';
-      this.meta.chips = this.items.map((t, k) => `Fragment ${k + 1}`);
+      this.meta.chips = this.items.map((t, k) => t && t.type === 'media' ? (t.media.type === 'video' ? `Vidéo ${k + 1}` : `Photo ${k + 1}`) : `Fragment ${k + 1}`);
     }
     onEnter() { this.camTween = GX.tween(this.rig, { dist: 13.5 }, 3200, { ease: ease.out }); }
     focusItem(k) {
-      if (k < 0 || k >= this.total) return; this.sel = k; this.showText(k, this.items[k]); this.moons[k].read = true;
+      if (k < 0 || k >= this.total) return; this.sel = k; this.showItem(k, this.items[k]); this.moons[k].read = true;
       const w = new THREE.Vector3(); this.moons[k].moon.getWorldPosition(w); this.burst.emit(w, this.pal[1], 60, 3);
       GX.cancelTweens(this.rig); GX.tween(this.rig, { dist: 6.5 }, 1200, { ease: ease.out }); GX.tween(this, { orbitScale: 0.06 }, 900);
     }
@@ -280,11 +293,21 @@
     async build() {
       const P = this.pal, st = this.star; const photos = st.gallery || [];
       makeDome(this, '#06303a', '#2a1a6a', '#3de0c0', 0.85); makeStarDome(this, 1500, P[0]);
-      /* éléments : photos puis fragments de texte */
-      this.entries = []; photos.forEach((p, k) => this.entries.push({ type: 'photo', src: p.src, caption: p.caption || st.title }));
-      this.items.forEach((t, k) => { if (t && !(this.entries.length === 0 && false)) this.entries.push({ type: 'text', text: t }); });
+      /* éléments : si 'items' place un média quelque part précis, cet ordre fait foi (texte et photos/vidéos mélangés
+         librement) ; sinon on garde l'ancien classement — les photos de 'gallery' d'abord, puis les mots. */
+      this.entries = []; const inlineMedia = this.items.some(it => it && it.type === 'media');
+      if (!inlineMedia) {
+        photos.forEach((p, k) => this.entries.push({ type: 'photo', src: p.src, caption: p.caption || st.title }));
+        this.items.forEach(it => { if (it && it.type === 'text' && it.text) this.entries.push({ type: 'text', text: it.text }); });
+      } else {
+        this.items.forEach(it => {
+          if (it && it.type === 'media') this.entries.push({ type: it.media.type === 'video' ? 'video' : 'photo', src: it.media.src, caption: it.media.caption || st.title });
+          else if (it && it.type === 'text' && it.text) this.entries.push({ type: 'text', text: it.text });
+        });
+        photos.forEach((p, k) => this.entries.push({ type: 'photo', src: p.src, caption: p.caption || st.title }));
+      }
       if (!this.entries.length) this.entries.push({ type: 'text', text: st.title });
-      this.total = this.entries.length; this.meta.chips = this.entries.map((e, k) => e.type === 'photo' ? `Photo ${k + 1}` : `Mot ${k + 1}`);
+      this.total = this.entries.length; this.meta.chips = this.entries.map((e, k) => e.type === 'photo' ? `Photo ${k + 1}` : e.type === 'video' ? `Vidéo ${k + 1}` : `Mot ${k + 1}`);
       this.meta.hint = 'Glisse pour regarder autour · molette pour zoomer · touche une photo pour l\'approcher';
       /* aurores */
       this.auroras = [];
@@ -301,7 +324,7 @@
         const ang = (n === 1 ? 0 : (k / n) * span - span / 2 + (span < TAU ? 0 : Math.PI)) , y = (k % 2 ? 0.7 : -0.5) + Math.sin(k * 1.7) * 0.5;
         const grp = new THREE.Group(); grp.position.set(Math.sin(ang) * R, y, -Math.cos(ang) * R); grp.lookAt(0, y * 0.3, 0);
         const mk = (tex, aspect) => {
-          const h = e.type === 'photo' ? 3.1 : Math.max(2.2, 3.1 / Math.max(1, aspect * 0.8)), w = clamp(h * aspect, 2, 5.2);
+          const h = (e.type === 'photo' || e.type === 'video') ? 3.1 : Math.max(2.2, 3.1 / Math.max(1, aspect * 0.8)), w = clamp(h * aspect, 2, 5.2);
           const plane = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.0, depthWrite: false, depthTest: false })); plane.renderOrder = 10; grp.add(plane);
           const halo = new THREE.Mesh(new THREE.PlaneGeometry(w * 1.25, h * 1.3), new THREE.ShaderMaterial({ uniforms: { uC: { value: this.accent.clone() }, uH: { value: 0 }, uTime: GX.uTime }, vertexShader: 'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}', fragmentShader: 'uniform vec3 uC;uniform float uH,uTime;varying vec2 vUv;void main(){vec2 d=abs(vUv-.5)*2.;float e=max(d.x,d.y);float a=exp(-pow((e-.8)*16.,2.))*.85+exp(-pow((e-.8)*4.5,2.))*.12;gl_FragColor=vec4(uC*a*(.5+.6*uH+.08*sin(uTime*2.)),1.);}', transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending })); halo.position.z = -0.02; halo.renderOrder = 9; grp.add(halo);
           const hit = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial()); hit.position.z = 0.02; grp.add(hit); this.addPick(hit, k);
@@ -312,6 +335,14 @@
         if (e.type === 'photo') {
           const placeholder = () => { const c = mkCanvas(640, 440), g = c.getContext('2d'), gr = g.createLinearGradient(0, 0, 640, 440); gr.addColorStop(0, '#2a1646'); gr.addColorStop(1, '#0d2a3a'); g.fillStyle = gr; g.fillRect(0, 0, 640, 440); const rr = rng(k + 5); for (let j = 0; j < 140; j++) { g.fillStyle = `rgba(255,255,255,${rr() * 0.6})`; g.fillRect(rr() * 640, rr() * 440, 1.6, 1.6); } g.fillStyle = 'rgba(248,236,226,.85)'; g.font = 'italic 34px Georgia, serif'; g.textAlign = 'center'; g.fillText(e.caption || '', 320, 210); g.font = '15px sans-serif'; g.fillStyle = 'rgba(203,191,216,.6)'; g.fillText('✦ photo à ajouter · ' + e.src, 320, 250); const t = new THREE.CanvasTexture(c); mk(t, 640 / 440); };
           loader.load(e.src, tex => { tex.minFilter = THREE.LinearFilter; tex.anisotropy = 4; mk(tex, tex.image.width / tex.image.height); }, undefined, placeholder);
+        } else if (e.type === 'video') {
+          /* ★ vidéo flottante dans la galerie : une boucle muette, comme un instant qui se rejoue doucement */
+          const v = document.createElement('video'); v.src = e.src; v.loop = true; v.muted = true; v.defaultMuted = true; v.playsInline = true; v.preload = 'auto'; v.setAttribute('playsinline', '');
+          const vt = new THREE.VideoTexture(v); vt.minFilter = THREE.LinearFilter; vt.magFilter = THREE.LinearFilter; vt.generateMipmaps = false;
+          this.disposables.push(() => { v.pause(); v.removeAttribute('src'); v.load(); });
+          mk(vt, 16 / 9);
+          v.addEventListener('loadedmetadata', () => { if (v.videoWidth && v.videoHeight && p.plane) { const asp = v.videoWidth / v.videoHeight, h = 3.1, w = clamp(h * asp, 2, 5.2); p.plane.geometry.dispose(); p.plane.geometry = new THREE.PlaneGeometry(w, h); p.w = w; p.h = h; } });
+          v.play().catch(() => { /* la lecture démarrera au premier geste de l'utilisateur */ });
         } else {
           const tt = textTexture(e.text, { maxW: 720, font: 'italic 400 50px "Cormorant Garamond", Georgia, serif', bg: 'rgba(14,10,30,.62)', border: this.accentHex, pad: 54, glow: 'rgba(255,255,255,.35)', glowBlur: 8 });
           mk(tt.tex, tt.aspect);
@@ -332,8 +363,8 @@
     focusItem(k) {
       if (k < 0 || k >= this.total) return; const p = this.panels[k]; if (!p || !p.ready) return;
       if (this.focusI >= 0 && this.focusI !== k) this.panels[this.focusI].target = 0;
-      this.focusI = k; p.target = 1; const e = p.e;
-      this.showText(k, e.type === 'photo' ? (e.caption || this.star.text) : e.text, { title: e.type === 'photo' ? '' : '' });
+      this.focusI = k; p.target = 1; const e = p.e; const isMedia = e.type === 'photo' || e.type === 'video';
+      this.showText(k, isMedia ? (e.caption || this.star.text) : e.text, { title: '' });
       const w = new THREE.Vector3(); p.grp.getWorldPosition(w); this.burst.emit(w, this.accentHex, 50, 2.5);
     }
     onReaderClosed() { if (this.focusI >= 0) { this.panels[this.focusI].target = 0; this.focusI = -1; } }
@@ -436,8 +467,14 @@
       GX.cancelTweens(this.rig); GX.tween(this.rig, { dist }, ms, { ease: ease.out });
     }
     rebuildMeta() {
-      const o = this.vsrc && !this.vfail ? 1 : 0; this.o = o; this.total = this.items.filter(Boolean).length + o;
-      this.meta.chips = []; if (o) this.meta.chips.push('Vidéo'); this.items.forEach((t, k) => { if (t) this.meta.chips.push(`Mot ${k + 1}`); });
+      const o = this.vsrc && !this.vfail ? 1 : 0; this.o = o;
+      /* ★ mots et médias supplémentaires mélangés librement, dans l'ordre choisi dans data.php — l'écran (s'il y a
+         une vidéo) garde sa place à part puisque c'est la salle elle-même, pas un élément de la séquence. */
+      this.usableItems = this.items.filter(it => it && (it.type === 'media' || (it.type === 'text' && it.text)));
+      this.textIdxMap = []; this.usableItems.forEach((it, j) => { if (it.type === 'text') this.textIdxMap.push(j); });
+      this.total = this.usableItems.length + o;
+      this.meta.chips = []; if (o) this.meta.chips.push('Vidéo');
+      this.usableItems.forEach((it, j) => { this.meta.chips.push(it.type === 'media' ? (it.media.type === 'video' ? `Vidéo ${j + 1}` : `Photo ${j + 1}`) : `Mot ${j + 1}`); });
       this.meta.hint = o ? 'Touche l\'écran pour lancer la vidéo · glisse pour regarder autour' : 'Les mots de cette étoile défilent sur l\'écran';
       if (!this.total) this.total = 1;
     }
@@ -458,11 +495,17 @@
     onTap(e) { const k = this.pickAt(e.clientX, e.clientY); if (k === 1000) { if (this.vsrc && !this.vfail) this.togglePlay(); else this.nextCaption(); return; } if (k >= 0) this.focusItem(k); else if (ui().reader.open) ui().reader.hide(); }
     focusItem(k) {
       if (this.o && k === 0) { this.togglePlay(); return; }
-      const idx = k - this.o, list = this.items.filter(Boolean); if (idx < 0 || idx >= list.length) return;
-      this.showText(k, list[idx]); GX.audio.chime(2, 0.2);
+      const idx = k - this.o, list = this.usableItems || []; if (idx < 0 || idx >= list.length) return;
+      this.showItem(k, list[idx]); GX.audio.chime(2, 0.2);
     }
     cycleCaptions() { this.capI = -1; this.capTimer = 0; }
-    nextCaption() { const list = this.items.filter(Boolean); if (!list.length) return; this.capI = (this.capI + 1) % list.length; this.setCaption(list[this.capI]); if (!this.vsrc || this.vfail) this.markRead(this.capI + this.o); }
+    /* ★ ne fait défiler en flottant sur l'écran QUE les mots (texte) — une photo/vidéo insérée dans 'items' se lit
+       elle, via sa propre petite carte (comme les autres univers), pas en texture plaquée sur l'écran. */
+    nextCaption() {
+      const map = this.textIdxMap || []; if (!map.length) return;
+      this.capI = (this.capI + 1) % map.length; const j = map[this.capI], it = (this.usableItems || [])[j];
+      if (!it) return; this.setCaption(it.text); if (!this.vsrc || this.vfail) this.markRead(j + this.o);
+    }
     setCaption(t) {
       if (this.cap) { this.scene.remove(this.cap); this.cap.material.map.dispose(); this.cap.material.dispose(); }
       const tt = textTexture(t, { maxW: 820, font: 'italic 400 56px "Cormorant Garamond", Georgia, serif', glow: 'rgba(255,255,255,.5)', pad: 30 }), w = 10.4;
@@ -515,11 +558,11 @@
       this.lineMat = new THREE.ShaderMaterial({ uniforms: { uTime: GX.uTime, uC: { value: new THREE.Color('#bcd0ff') }, uG: { value: new THREE.Color('#ffe0a0') }, uAll: { value: 0 } }, vertexShader: 'attribute float aU,aLit,aLd;varying float vA,vL,vU;void main(){vU=aU;vL=aLit;vA=aLd;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}', fragmentShader: 'uniform float uTime,uAll;uniform vec3 uC,uG;varying float vA,vL,vU;void main(){float ph=fract(uTime*.15+vA);float pulse=exp(-pow((vU-(ph*1.6-.3))*5.,2.));float l=max(vL,uAll);vec3 c=mix(uC,uG,l);gl_FragColor=vec4(c*(.2+.55*pulse+.8*l),1.);}', transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending });
       this.lines = new THREE.LineSegments(g, this.lineMat); this.lines.renderOrder = 4; this.lines.frustumCulled = false; this.scene.add(this.lines);
       this.camTarget = new THREE.Vector3(0, 0, -4); this.sel = -1; this.burst = new Burst(this.scene, 360); this.nameFade = 0;
-      this.meta.hint = 'Touche chaque étoile pour la faire briller · glisse pour tourner autour'; this.meta.chips = this.items.map((t, k) => `Étoile ${k + 1}`);
+      this.meta.hint = 'Touche chaque étoile pour la faire briller · glisse pour tourner autour'; this.meta.chips = this.items.map((t, k) => t && t.type === 'media' ? (t.media.type === 'video' ? `Vidéo ${k + 1}` : `Photo ${k + 1}`) : `Étoile ${k + 1}`);
     }
     onEnter() { GX.tween(this.rig, { dist: 25 }, 3600, { ease: ease.out }); }
     focusItem(k) {
-      if (k < 0 || k >= this.total) return; this.sel = k; const nd = this.nodes[k]; this.showText(k, this.items[k]);
+      if (k < 0 || k >= this.total) return; this.sel = k; const nd = this.nodes[k]; this.showItem(k, this.items[k]);
       const li = this.lines.geometry.attributes.aLit.array; this.segs.forEach((s, j) => { for (let e = 0; e < 2; e++) li[j * 2 + e] = Math.max(li[j * 2 + e], (this.read.has(s[e]) ? 1 : 0)); }); this.lines.geometry.attributes.aLit.needsUpdate = true;
       this.burst.emit(nd.p, '#ffe0a0', 90, 4); GX.cancelTweens(this.rig); GX.tween(this.rig, { dist: 10.5 }, 1300, { ease: ease.out });
     }
@@ -598,11 +641,11 @@
       this.petals = new THREE.Points(pg, this.petalMat); this.petals.frustumCulled = false; this.petals.renderOrder = 8; this.scene.add(this.petals);
       const moon = new THREE.Sprite(glowMat('#e8fff0', 0.9, true)); moon.scale.set(36, 36, 1); moon.position.set(-60, 42, -90); this.scene.add(moon);
       this.grow = 0; this.camTarget = new THREE.Vector3(0, 6.6, 0); this.sel = -1; this.burst = new Burst(this.scene);
-      this.meta.hint = 'Glisse pour tourner autour de l\'arbre · touche une lumière pour la lire'; this.meta.chips = this.items.map((t, k) => `Lumière ${k + 1}`);
+      this.meta.hint = 'Glisse pour tourner autour de l\'arbre · touche une lumière pour la lire'; this.meta.chips = this.items.map((t, k) => t && t.type === 'media' ? (t.media.type === 'video' ? `Vidéo ${k + 1}` : `Photo ${k + 1}`) : `Lumière ${k + 1}`);
     }
     onEnter() { GX.tween(this, { grow: 1.1 }, 6500, { ease: ease.inOutSine }); GX.tween(this.rig, { dist: 31 }, 4800, { ease: ease.out }); GX.audio.whoosh(2.4, true, 0.2); }
     focusItem(k) {
-      if (k < 0 || k >= this.total) return; this.sel = k; const L = this.lights[k]; this.showText(k, this.items[k]); this.burst.emit(L.p, '#ffe9a0', 90, 3.5);
+      if (k < 0 || k >= this.total) return; this.sel = k; const L = this.lights[k]; this.showItem(k, this.items[k]); this.burst.emit(L.p, '#ffe9a0', 90, 3.5);
       const rp = this.ripples[this.rippleI++ % 3]; rp.set(L.p.x * 0.6, L.p.z * 0.6, GX.T, 1); GX.cancelTweens(this.rig); GX.tween(this.rig, { dist: 11 }, 1400, { ease: ease.out });
     }
     onReaderClosed() { this.sel = -1; GX.tween(this.rig, { dist: 31 }, 1600, { ease: ease.inOut }); }
@@ -628,16 +671,34 @@
       makeDome(this, '#140a44', '#5a2a9a', '#c07aff', 0.62); makeStarDome(this, 1800, P[1]);
       this.L = (n + 1) * GAP; this.GAP = GAP; this.gates = [];
       const glow = GX.hub.glowTex;
-      this.items.forEach((txt, k) => {
+      this.items.forEach((item, k) => {
         const d = (k + 1) * GAP, grp = new THREE.Group(); grp.position.set(this.pathX(d), this.pathY(d), -d); this.scene.add(grp);
         const N = 280, pos = new Float32Array(N * 3), col = new Float32Array(N * 3), c = new THREE.Color();
         for (let j = 0; j < N; j++) { const a = j / N * TAU, rad = 4.7 + (r() - 0.5) * 0.35; pos.set([Math.cos(a) * rad, Math.sin(a) * rad, (r() - 0.5) * 0.6], j * 3); c.set(P[j % 3]); col.set([c.r, c.g, c.b], j * 3); }
         const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3));
         const ring = new THREE.Points(g, new THREE.PointsMaterial({ size: 0.34, map: glow, vertexColors: true, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false, sizeAttenuation: true })); ring.renderOrder = 6; grp.add(ring);
         const halo = new THREE.Sprite(glowMat(P[k % 3], 0.5, true)); halo.scale.set(13, 13, 1); halo.renderOrder = 4; grp.add(halo);
-        const tt = textTexture(txt, { maxW: 760, font: 'italic 400 54px "Cormorant Garamond", Georgia, serif', glow: 'rgba(255,255,255,.55)', glowBlur: 14, pad: 30 }), w = 7.2;
-        const txtMesh = new THREE.Mesh(new THREE.PlaneGeometry(w, w / tt.aspect), new THREE.MeshBasicMaterial({ map: tt.tex, transparent: true, opacity: 0, depthWrite: false, depthTest: false })); txtMesh.renderOrder = 9; grp.add(txtMesh);
-        this.gates.push({ grp, ring, halo, txt: txtMesh, d, passed: false, k });
+        const w = 7.2; let gateMesh;
+        if (item && item.type === 'media' && item.media.type === 'video') {
+          /* ★ une vidéo au milieu du voyage : une boucle muette, comme un souvenir qu'on retraverse */
+          const v = document.createElement('video'); v.src = item.media.src; v.loop = true; v.muted = true; v.defaultMuted = true; v.playsInline = true; v.preload = 'auto'; v.setAttribute('playsinline', '');
+          const vt = new THREE.VideoTexture(v); vt.minFilter = THREE.LinearFilter; vt.magFilter = THREE.LinearFilter; vt.generateMipmaps = false;
+          this.disposables.push(() => { v.pause(); v.removeAttribute('src'); v.load(); });
+          gateMesh = new THREE.Mesh(new THREE.PlaneGeometry(w, w * 9 / 16), new THREE.MeshBasicMaterial({ map: vt, transparent: true, opacity: 0, depthWrite: false, depthTest: false }));
+          v.addEventListener('loadedmetadata', () => { if (v.videoWidth && v.videoHeight) { const asp = v.videoWidth / v.videoHeight; gateMesh.geometry.dispose(); gateMesh.geometry = new THREE.PlaneGeometry(w, w / asp); } });
+          v.play().catch(() => { /* démarrera au premier geste */ });
+        } else if (item && item.type === 'media') {
+          /* photo — texture chargée, avec un repère doux en attendant */
+          const ph = mkCanvas(640, 440), pg = ph.getContext('2d'), gr = pg.createLinearGradient(0, 0, 640, 440); gr.addColorStop(0, '#2a1a5a'); gr.addColorStop(1, '#140a30'); pg.fillStyle = gr; pg.fillRect(0, 0, 640, 440);
+          gateMesh = new THREE.Mesh(new THREE.PlaneGeometry(w, w * 440 / 640), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(ph), transparent: true, opacity: 0, depthWrite: false, depthTest: false }));
+          new THREE.TextureLoader().load(item.media.src, tex => { tex.minFilter = THREE.LinearFilter; tex.anisotropy = 4; const asp = tex.image.width / tex.image.height; gateMesh.material.map = tex; gateMesh.material.needsUpdate = true; gateMesh.geometry.dispose(); gateMesh.geometry = new THREE.PlaneGeometry(w, w / asp); }, undefined, () => { /* le repère reste affiché */ });
+        } else {
+          const txt = item && item.type === 'text' ? item.text : String(item == null ? '' : item);
+          const tt = textTexture(txt, { maxW: 760, font: 'italic 400 54px "Cormorant Garamond", Georgia, serif', glow: 'rgba(255,255,255,.55)', glowBlur: 14, pad: 30 });
+          gateMesh = new THREE.Mesh(new THREE.PlaneGeometry(w, w / tt.aspect), new THREE.MeshBasicMaterial({ map: tt.tex, transparent: true, opacity: 0, depthWrite: false, depthTest: false }));
+        }
+        gateMesh.renderOrder = 9; grp.add(gateMesh);
+        this.gates.push({ grp, ring, halo, txt: gateMesh, d, passed: false, k });
       });
       /* particules du tunnel + traînées de vitesse */
       const TN = small ? 1500 : 3400, tp = new Float32Array(TN * 3), tc = new Float32Array(TN * 3), cc = new THREE.Color();
@@ -656,7 +717,7 @@
       const ft = textTexture(`${st.title}`, { maxW: 900, font: 'italic 300 100px "Cormorant Garamond", Georgia, serif', glow: 'rgba(255,230,180,.9)', glowBlur: 30, color: '#fff6e4', extra: 60 }); const fm = new THREE.Mesh(new THREE.PlaneGeometry(22, 22 / ft.aspect), new THREE.MeshBasicMaterial({ map: ft.tex, transparent: true, opacity: 0, depthWrite: false, depthTest: false })); fm.position.z = 6; fm.renderOrder = 9; this.dest.add(fm); this.finalText = fm;
       this.d = 0; this.dT = 0; this.v = 0; this.cruise = false; this.sm = { x: 0, y: 0 }; this.burst = new Burst(this.scene, 300); this.keys = {};
       this.camera.position.set(this.pathX(0), this.pathY(0), 0);
-      this.meta.hint = 'Fais défiler ou glisse vers le haut pour avancer · ↑ ↓ au clavier · chaque porte garde un souhait'; this.meta.chips = this.items.map((t, k) => `Porte ${k + 1}`);
+      this.meta.hint = 'Fais défiler ou glisse vers le haut pour avancer · ↑ ↓ au clavier · chaque porte garde un souhait'; this.meta.chips = this.items.map((t, k) => t && t.type === 'media' ? (t.media.type === 'video' ? `Vidéo ${k + 1}` : `Photo ${k + 1}`) : `Porte ${k + 1}`);
     }
     onEnter() {
       const box = $('w-extra'); box.innerHTML = '';
