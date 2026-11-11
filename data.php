@@ -91,7 +91,7 @@ $constellationStars = [
         'kicker'   => 'Souvenir',                                              //   petit titre (facultatif)
         // ★ Chaque phrase devient une lune à toucher. Remplace TOUT le texte entre crochets [...].
         'text'     => "Je ne savais pas encore quelle place tu prendrais dans ma vie. Je savais seulement que quelque chose chez toi attirait doucement mon cœur vers toi. Ton intelligence, ta façon de parler, et surtout cette manière que tu avais de me regarder… J’avais le sentiment que tu cherchais à voir qui j’étais vraiment, au-delà de ce que je pouvais offrir.Avec toi, je me suis senti vu, compris, et doucement apprécié pour la personne que je suis. Je ne sais pas à quel instant précis mon cœur a commencé à s’attacher, mais je sais que tu es devenue différente des autres.❤️",
-        'media'    => null,
+        'gallery'  => [['src' => 'assets/photos/made.jpeg', 'caption' => 'Des moments que je ne pourrais pas me sortir de la tête'], ['src' => 'assets/photos/san.png', 'caption' => 'Ce regard qui te donne un air tellement charmante']],
     ],
 
     /* ── ÉTOILE II · haut droit · monde : GALERIE (photo) ── */
@@ -140,7 +140,7 @@ $constellationStars = [
         'title'    => 'Exemple de légende',                                    // ★ titre — à personnaliser
         'text'     => "[Décris ce souvenir en une phrase.]",                    // ★ phrase (affichée sur l'écran si la vidéo manque) — à personnaliser
         // 🔧 Réutilise temporairement sanavid.mp4 ici le temps que tu déposes une 2e vidéo dans assets/videos/ et corriges le nom ci-dessous.
-        'media'    => ['type' => 'video', 'src' => 'assets/videos/sanavid.mp4'],  // 📁 ★ dépose la vidéo (mp4) dans assets/videos/ et corrige le nom
+        'media'    => ['type' => 'video', 'src' => 'assets/videos/complice2.mp4'],  // 📁 ★ dépose la vidéo (mp4) dans assets/videos/ et corrige le nom
     ],
 
     /* ── ÉTOILE VII · bas gauche · monde : ARBRE DE LUMIÈRE ── */
@@ -150,7 +150,7 @@ $constellationStars = [
         'title'    => 'Ce que cette histoire m\'a appris',                     // ★ titre
         // ★ Une phrase = une lumière de l'arbre (jusqu'à 9).
         'text'     => "Notre histoire m’a appris beaucoup de choses sur moi-même, surtout sur ma façon de réagir quand je suis blessé. Je sais que j’ai encore du travail à faire sur moi, notamment apprendre à me calmer, à moins supposer et à ne pas laisser le silence parler à ma place. J’aimerais qu’on apprenne à mieux communiquer, même quand on est fâchés. Qu’on prenne un moment chaque semaine pour parler de nous, de ce qui va et de ce qui nous fait mal, sans avoir peur d’être honnêtes. Je sais que certaines choses ont été abîmés, mais je ne veux pas que la colère et le silence finissent par parler à notre place.❤️",
-        'media'    => null,
+        'media'    => ['type' => 'video', 'src' => 'assets/videos/complice3.mp4'],  // 📁 ★ dépose la vidéo (mp4) dans assets/videos/ et corrige le nom
     ],
 
     /* ── ÉTOILE VIII · creux du haut · monde : TUNNEL D'ÉTOILES ── */
@@ -161,7 +161,7 @@ $constellationStars = [
         // ★ Une phrase = une porte à franchir, avec un souhait (jusqu'à 8).
         // 🖊️ BROUILLON — à relire et personnaliser avant d'envoyer.
         'text'     => "Je ne veux rien te promettre que je ne pourrais pas tenir — juste te dire, doucement, ce que j'espère pour nous. J'aimerais qu'on découvre ensemble un endroit où ni toi ni moi n'avons jamais mis les pieds, juste pour explorer le monde main dans la main. J'aimerais qu'on prenne le temps de vivre de nouvelles choses à deux, sans pression, juste pour le plaisir d'être ensemble. Et par-dessus tout, je souhaite que tu te sentes aimée, chaque jour, exactement comme tu es.❤️",
-        'media'    => null,
+        'media'    => ['type' => 'video', 'src' => 'assets/videos/complice.mp4'],  // 📁 ★ dépose la vidéo (mp4) dans assets/videos/ et corrige le nom
     ],
 ];
 
