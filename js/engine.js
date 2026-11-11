@@ -359,8 +359,21 @@
       s.connect(bp); bp.connect(g); g.connect(sfx); s.start(t);
     }
     function tick(vol = 0.12) { pluck(1480 + Math.random() * 200, vol, 0, 'triangle'); }
-    function setMuted(m) { muted = m; if (ready) master.gain.setTargetAtTime(m ? 0 : 0.9, ctx.currentTime, 0.2); if (musicEl && musicEl.src) { if (m) musicEl.pause(); else { fadingOut = false; musicEl.play().catch(() => {}); fadeMusic(1, 0.6); } } }
-    function duck(on) { if (musicGain) musicGain.gain.setTargetAtTime(on ? 0.08 : (MUS().volume != null ? MUS().volume : 0.55), ctx.currentTime, 0.4); if (padBus) padBus.gain.setTargetAtTime(on ? 0.3 : 1, ctx.currentTime, 0.4); }
-    return { init, setMood, pluck, note, chime, whoosh, tick, setMuted, duck, nextTrack, get track() { return current; }, get muted() { return muted; }, get ready() { return ready; } };
+    function setMuted(m) { muted = m; if (ready) master.gain.setTargetAtTime(m ? 0 : 0.9, ctx.currentTime, 0.2); if (musicEl && musicEl.src) { if (m) musicEl.pause(); else if (!holds.size) { fadingOut = false; musicEl.play().catch(() => {}); fadeMusic(1, 0.6); } } }
+    /* ----- ★ PAUSE AUTOMATIQUE : tant qu'une vidéo AVEC SON joue, la musique (chansons + nappe d'ambiance) se met en pause,
+       puis reprend toute seule là où elle s'était arrêtée. Chaque vidéo s'identifie par une clé ('cinema', 'reader'…) :
+       la musique ne reprend que lorsque TOUTES les clés ont été relâchées. ----- */
+    const holds = new Set(); let holdTimer = null;
+    function applyHold() {
+      if (!ready) return;
+      const on = holds.size > 0; clearTimeout(holdTimer);
+      if (padBus) padBus.gain.setTargetAtTime(on ? 0 : 1, ctx.currentTime, 0.3);
+      if (!musicEl || !musicEl.src) return;
+      if (on) { fadeMusic(0, 0.35); holdTimer = setTimeout(() => { if (holds.size) musicEl.pause(); }, 380); }   // fondu court, puis vraie pause
+      else if (!muted) { fadingOut = false; musicEl.play().catch(() => { /* reprendra au prochain geste */ }); fadeMusic(1, 1.2); }
+    }
+    function holdMusic(key, on) { if (on) holds.add(key); else holds.delete(key); applyHold(); }
+    function duck(on) { holdMusic('cinema', on); }                  // ancien nom, utilisé par le cinéma céleste (worlds.js)
+    return { init, setMood, pluck, note, chime, whoosh, tick, setMuted, duck, holdMusic, nextTrack, get track() { return current; }, get muted() { return muted; }, get ready() { return ready; } };
   })();
 })();
