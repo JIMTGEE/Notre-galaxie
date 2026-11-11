@@ -137,8 +137,8 @@ $constellationStars = [
     [
         'position' => 'right-lower',
         'type'     => 'video',
-        'title'    => 'Exemple de légende',                                    // ★ titre — à personnaliser
-        'text'     => "[Décris ce souvenir en une phrase.]",                    // ★ phrase (affichée sur l'écran si la vidéo manque) — à personnaliser
+        'title'    => 'On ne s’est pas choisis sans raison',                                    // ★ titre — à personnaliser
+        'text'     => "À un moment donné, malgré tout ce que la vie nous réservait, nos chemins se sont croisés et nous avons vu quelque chose l’un chez l’autre qui nous a donné envie de nous choisir. Aujourd’hui, les choses sont moins simples, mais je n’oublie pas ce qui nous a rapprochés. Je crois que ce que nous avons partagé mérite d’être compris, protégé et, si nos deux cœurs le souhaitent encore, de retrouver sa place.",                    // ★ phrase (affichée sur l'écran si la vidéo manque) — à personnaliser
         // 🔧 Réutilise temporairement sanavid.mp4 ici le temps que tu déposes une 2e vidéo dans assets/videos/ et corriges le nom ci-dessous.
         'media'    => ['type' => 'video', 'src' => 'assets/videos/complice2.mp4'],  // 📁 ★ dépose la vidéo (mp4) dans assets/videos/ et corrige le nom
     ],
@@ -174,10 +174,10 @@ $letterTitle = "Ce que je n'exprime pas toujours";                              
 $letterParagraphs = [                                                          // ★ ajoute ou retire des paragraphes à volonté
     "Je t'écris ces mots en sachant que je ne les dis pas assez souvent à voix haute. Il y a des choses que je porte en silence, non pas parce qu'elles comptent moins, mais parce que je ne trouve pas toujours comment les dire. Alors je les écris ici, pour toi.",
     "Tu es devenue, sans que je l'aie vraiment planifié, la personne vers qui je me tourne en premier — dans la joie comme dans les moments plus difficiles. Simplement, tu comptes. Plus que je ne saurais l'exprimer en une seule phrase.",
-    "Notre histoire m'a appris à être plus patient, à écouter avant de réagir, et à comprendre que l'amour ne se mesure pas à l'absence de disputes, mais à la volonté de revenir l'un vers l'autre après. Tu m'as appris à aimer mieux, pas seulement plus fort.",
+    "Notre histoire m'a appris à comprendre que l'amour ne se mesure pas à l'absence de disputes, mais à la volonté de revenir l'un vers l'autre après. Tu m'as appris à aimer mieux, pas seulement plus fort.",
     "Aujourd'hui encore, j'admire ta force tranquille, ta manière de te relever après chaque chute, et cette lumière que tu gardes même quand tout n'est pas parfait. Tu es, et tu resteras, une étoile entre mille.❤️",
 ];
-$letterSignoff = "Toujours à toi. — Jim";                  // ★ signature (affichée en doré, à la fin) — brouillon, à ajuster
+$letterSignoff = "Toujours à toi. — Ton p'tit J";                  // ★ signature (affichée en doré, à la fin) — brouillon, à ajuster
 
 /* ══════════════════════════════════════════════════════════════════════════
    ★5 · PHRASES D'OUVERTURE — film d'introduction (première visite seulement)
