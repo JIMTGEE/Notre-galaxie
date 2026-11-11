@@ -57,10 +57,14 @@
   let rdCb = {};
   /* ★ média (photo/vidéo) : toujours sa propre forme, jamais étirée ni rognée — responsive (CSS pur, fiable sur téléphone) */
   function renderReaderMedia(media) {
-    const box = $('reader-media'); box.innerHTML = '';
+    const box = $('reader-media'); GX.audio.holdMusic('reader', false); box.innerHTML = '';   // la vidéo précédente (si elle jouait) relâche la musique
     if (!media || !media.src) { box.hidden = true; return; }
     if (media.type === 'video') {
-      const v = el('video', '', ''); v.src = media.src; v.controls = true; v.playsInline = true; v.preload = 'metadata'; v.setAttribute('controlslist', 'nodownload'); box.appendChild(v);
+      const v = el('video', '', ''); v.src = media.src; v.controls = true; v.playsInline = true; v.preload = 'metadata'; v.setAttribute('controlslist', 'nodownload');
+      /* ★ musique en pause pendant que la vidéo joue, reprise automatique à la pause / à la fin / à la fermeture */
+      v.addEventListener('play', () => GX.audio.holdMusic('reader', true));
+      ['pause', 'ended', 'error'].forEach(ev => v.addEventListener(ev, () => GX.audio.holdMusic('reader', false)));
+      box.appendChild(v);
     } else {
       const img = el('img', '', ''); img.src = media.src; img.alt = ''; img.loading = 'lazy'; box.appendChild(img);
     }
