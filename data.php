@@ -90,8 +90,19 @@ $constellationStars = [
         'title'    => 'Notre rencontre',                                       // ★ titre
         'kicker'   => 'Souvenir',                                              //   petit titre (facultatif)
         // ★ Chaque phrase devient une lune à toucher. Remplace TOUT le texte entre crochets [...].
-        'text'     => "Je ne savais pas encore quelle place tu prendrais dans ma vie. Je savais seulement que quelque chose chez toi attirait doucement mon cœur vers toi. Ton intelligence, ta façon de parler, et surtout cette manière que tu avais de me regarder… J’avais le sentiment que tu cherchais à voir qui j’étais vraiment, au-delà de ce que je pouvais offrir.Avec toi, je me suis senti vu, compris, et doucement apprécié pour la personne que je suis. Je ne sais pas à quel instant précis mon cœur a commencé à s’attacher, mais je sais que tu es devenue différente des autres.❤️",
-        'gallery'  => [['src' => 'assets/photos/made.jpeg', 'caption' => 'Des moments que je ne pourrais pas me sortir de la tête'], ['src' => 'assets/photos/san.png', 'caption' => 'Ce regard qui te donne un air tellement charmante']],
+        'text'     => "Je ne savais pas encore quelle place tu prendrais dans ma vie. Je savais seulement que quelque chose chez toi attirait doucement mon cœur vers toi. Ton intelligence, ta façon de parler, et surtout cette manière que tu avais de me regarder… J’avais le sentiment que tu cherchais à voir qui j’étais vraiment, au-delà de ce que je pouvais offrir. Avec toi, je me suis senti vu, compris, et doucement apprécié pour la personne que je suis. Je ne sais pas à quel instant précis mon cœur a commencé à s’attacher, mais je sais que tu es devenue différente des autres.❤️",
+        // 📷 Le monde « planète » ne lit pas 'gallery' : les photos sont donc placées ici, dans 'items', entre les phrases.
+        //   'items' a priorité sur 'text' (qui reste en repli). Pour changer l'ordre, déplace simplement les lignes.
+        'items'    => [
+            'Je ne savais pas encore quelle place tu prendrais dans ma vie.',
+            'Je savais seulement que quelque chose chez toi attirait doucement mon cœur vers toi.',
+            'Ton intelligence, ta façon de parler, et surtout cette manière que tu avais de me regarder…',
+            ['media' => ['type' => 'photo', 'src' => 'assets/photos/san.png', 'caption' => 'Ce regard qui te donne un air tellement charmante']],
+            'J’avais le sentiment que tu cherchais à voir qui j’étais vraiment, au-delà de ce que je pouvais offrir.',
+            'Avec toi, je me suis senti vu, compris, et doucement apprécié pour la personne que je suis.',
+            ['media' => ['type' => 'photo', 'src' => 'assets/photos/made.jpeg', 'caption' => 'Des moments que je ne pourrais pas me sortir de la tête']],
+            'Je ne sais pas à quel instant précis mon cœur a commencé à s’attacher, mais je sais que tu es devenue différente des autres.❤️',
+        ],
     ],
 
     /* ── ÉTOILE II · haut droit · monde : GALERIE (photo) ── */
@@ -120,7 +131,7 @@ $constellationStars = [
         'type'     => 'trait',
         'title'    => 'Une petite chose que j\'aime chez toi',                 // ★ titre
         // ★ Une phrase = une étoile à allumer (jusqu'à 9).
-        'text'     => "Il y a tant de choses que j’aime chez toi. Tu sais me calmer comme personne, mais tu sais aussi me rendre fou parfois.😂Et pourtant, si tu me demandais ce que j’aime le plus chez toi, je ne saurais pas vraiment quoi répondre. Parce qu’au fond, ce n’est pas seulement ton sourire, ni tes yeux, ni ta voix. C’est toi. Toi, tout simplement. Je t’aime, et parfois, c’est la seule raison que mon cœur sait donner.❤️",
+        'text'     => "Il y a tant de choses que j’aime chez toi. Tu sais me calmer comme personne, mais tu sais aussi me rendre fou parfois 😂. Et pourtant, si tu me demandais ce que j’aime le plus chez toi, je ne saurais pas vraiment quoi répondre. Parce qu’au fond, ce n’est pas seulement ton sourire, ni tes yeux, ni ta voix. C’est toi. Toi, tout simplement. Je t’aime, et parfois, c’est la seule raison que mon cœur sait donner.❤️",
         'media'    => null,
     ],
 
@@ -129,7 +140,7 @@ $constellationStars = [
         'position' => 'left-mid',
         'type'     => 'trait',
         'title'    => 'Une autre petite chose',                                // ★ titre
-        'text'     => "J’admire ta force, tes ambitions, ton intelligence et ta résilience. J’aime cette femme qui continue d’avancer malgré ses blessures, qui doute parfois, mais qui n’abandonne pas. J’aime tes imperfections autant que tes qualités.❤️Et même quand tu es fatiguée d’être forte, j’aimerais être là pour toi, t’apporter un peu de paix et te rappeler que tu mérites autant d’amour que tu en donnes.", // ★
+        'text'     => "J’admire ta force, tes ambitions, ton intelligence et ta résilience. J’aime cette femme qui continue d’avancer malgré ses blessures, qui doute parfois, mais qui n’abandonne pas. J’aime tes imperfections autant que tes qualités ❤️. Et même quand tu es fatiguée d’être forte, j’aimerais être là pour toi, t’apporter un peu de paix et te rappeler que tu mérites autant d’amour que tu en donnes.", // ★
         'media'    => null,
     ],
 
@@ -149,7 +160,7 @@ $constellationStars = [
         'type'     => 'lesson',
         'title'    => 'Ce que cette histoire m\'a appris',                     // ★ titre
         // ★ Une phrase = une lumière de l'arbre (jusqu'à 9).
-        'text'     => "Notre histoire m’a appris beaucoup de choses sur moi-même, surtout sur ma façon de réagir quand je suis blessé. Je sais que j’ai encore du travail à faire sur moi, notamment apprendre à me calmer, à moins supposer et à ne pas laisser le silence parler à ma place. J’aimerais qu’on apprenne à mieux communiquer, même quand on est fâchés. Qu’on prenne un moment chaque semaine pour parler de nous, de ce qui va et de ce qui nous fait mal, sans avoir peur d’être honnêtes. Je sais que certaines choses ont été abîmés, mais je ne veux pas que la colère et le silence finissent par parler à notre place.❤️",
+        'text'     => "Notre histoire m’a appris beaucoup de choses sur moi-même, surtout sur ma façon de réagir quand je suis blessé. Je sais que j’ai encore du travail à faire sur moi, notamment apprendre à me calmer, à moins supposer et à ne pas laisser le silence parler à ma place. J’aimerais qu’on apprenne à mieux communiquer, même quand on est fâchés. Qu’on prenne un moment chaque semaine pour parler de nous, de ce qui va et de ce qui nous fait mal, sans avoir peur d’être honnêtes. Je sais que certaines choses ont été abîmées, mais je ne veux pas que la colère et le silence finissent par parler à notre place.❤️",
         'media'    => ['type' => 'video', 'src' => 'assets/videos/complice3.mp4'],  // 📁 ★ dépose la vidéo (mp4) dans assets/videos/ et corrige le nom
     ],
 
